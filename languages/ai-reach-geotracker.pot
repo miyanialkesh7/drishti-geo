@@ -1,0 +1,544 @@
+﻿# Translation Template for AI Reach (GEO Tracker)
+# Copyright (C) 2026 Expert WordPress Developer
+# This file is distributed under the same license as the AI Reach (GEO Tracker) package.
+msgid ""
+msgstr ""
+"Project-Id-Version: AI Reach (GEO Tracker) 1.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-10 16:05:+0500\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2026-07-10 16:05:+0500\n"
+"Last-Translator: Techeshta Solutions <info@techeshta.com>\n"
+"Language-Team: Techeshta Solutions <support@techeshta.com>\n"
+"Language: en_US\n"
+
+#: includes/class-ai-reach-admin.php
+msgid "A comma-separated list of keywords that will trigger AI engine searches."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Last Scan: %s"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Get your key from <a href=\"%s\" target=\"_blank\" rel=\"noopener\">openrouter.ai</a>. Provides access to multiple LLM providers in one key."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Get your key from <a href=\"%s\" target=\"_blank\" rel=\"noopener\">platform.openai.com</a>."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Select the AI model to use for all engine scans under this provider."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Target Keywords"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Anthropic"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Robots.txt restrictions removed successfully!"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No action required. Your heading hierarchy clearly links keywords with site context."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "View Full Transcript"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Command Center"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "9-Point Deep Dive"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Active AI Engines referencing your brand."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Participate actively in relevant subreddits, write detailed Quora answers, and secure links on high-authority wikis/media."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Engine ID missing."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Get your key from <a href=\"%s\" target=\"_blank\" rel=\"noopener\">perplexity.ai</a>. Natively searches the live web."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Ensure major keywords appear organically inside your H1 and H2 tags:"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "AI Crawler Safelist"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Overall AI Score"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Perplexity"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Publish a new post or update an existing one weekly. AI crawlers favor active content domains."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Gemini API Key"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "WordPress \"Search Engine Visibility\" option is set to discourage indexing, which inserts Disallow: / to your virtual robots.txt."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Could not write to physical robots.txt file. Please check file permissions or edit manually."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Your brand was mentioned in %d of the 5 active AI engine search results."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Gemini"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Homepage copy exhibits natural, first/second-person pronouns suited for chat inputs."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "API key is not configured. Please add your key in the Configuration tab."
+msgstr ""
+
+#: ai-reach-geotracker.php
+msgid "Scan failed: "
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "9. EEAT Score (Author Bios)"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "All defined target keywords are indexed within title tags or H1/H2 header tags."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Keep up the customer service and clean reputational records."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Missing target keywords in headings: %s."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Your latest content was published on %s (less than 30 days ago)."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No tabular listings or FAQ panels detected on the homepage."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Develop organic PR, secure references on directory listings, and publish reviews to establish digital footprint."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "AI Search Engine Visibility Matrix"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "AI response sentiment is positive or neutral."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "4. Conversational Tone"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "AI engine transcripts refer to discussions/sources on authority domains."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Structured tables, lists, or details tags are present on your homepage."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Optimized"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "The specific brand name or entity phrase AI engines should search for (e.g. Acme Corp)."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No action required. Keep updating your site regularly to feed real-time search models."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "8. Sentiment Vector"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Configuration"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "1. Brand Entity Alignment (Schema)"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Fill in the \"Biographical Info\" text area inside your profile under WordPress Users settings to feed entity authority."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Evaluate transcripts for complaints, address user reviews online, and build a positive citation campaign."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Connection verified successfully!"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Revise text from passive academic tone to conversational tone. Optimize for NLP (Natural Language Processing):"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "2. Information Freshness (Content Age)"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Auto-Fix Blocker"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Physical robots.txt file exists and contains a global \"Disallow: /\" directive."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Model"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Please fill in settings in the <a href=\"#\" class=\"go-to-settings-tab\">Configuration Tab</a> before running a scan."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Settings saved successfully!"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No action required. Your semantic structure is ready for AI LLM relationship crawlers."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Enable Daily Auto-Scan via WP-Cron"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Select which AI provider will power the scans. Only the active provider key is required."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "âŒ Missing"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Engine Scan Transcript"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Your brand was not cited in any of the simulated AI search answers."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Generative Engine Optimization & AI Visibility command center."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "OpenAI API Key"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Perplexity API Key"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "General Settings"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "ai.txt file generated successfully at the root directory!"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No action required. Your structure supports featured answer extractions."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Run AI Scan"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Invalid response format from Anthropic API."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Generate ai.txt File"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "OpenRouter API Key"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Get your key from <a href=\"%s\" target=\"_blank\" rel=\"noopener\">Google AI Studio</a>. Includes live Google Search grounding."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No authority platform references (Reddit, Quora, Wiki) were found alongside mentions."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Total Mentions"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Off-Page Trust & Authority"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No action required. Your publishing structure demonstrates author credibility."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Content Optimization"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No author biographical descriptions were found in active WordPress profiles."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "âœ… Mentioned"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No Organization or Brand schema was detected in your homepage HTML header."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "5. Contextual Relevance (Keywords in Headings)"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Action Required"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Paste this JSON-LD schema markup inside the head section of your site to establish entity authority:"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Insert an FAQ block or a direct comparison table. AI engines look for structured blocks to parse answers directly:"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "The latest post was published on %s (older than 30 days ago)."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Schema.org Brand, Organization, or WebSite JSON-LD markup is present on your homepage."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "API Provider"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "3. Direct Answerability (FAQ/Tables)"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "API Key is empty."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Invalid response format from Gemini API."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Brand/Entity Name"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Negative sentiment cues detected: negative keyword matches (%d) exceed positive matches (%d)."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No action required. The copy is organic and fits standard prompt response styles."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Automated Scan Schedule"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Calculated across the 9 optimization pillars."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "AI Reach"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "AI Reach Dashboard"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Recommended Implementation:"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "âšª Not Scanned"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Action Step:"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "No scan data available. Trigger a scan to analyze visibility."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Physical robots.txt explicitly blocks \"%s\" from crawling."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Found biographical profile details for administrators or editor authors."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Close"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Good off-page presence. Continue building reviews and mentions."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "API response code %d."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "AI Blockers Detected in robots.txt!"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Anthropic API Key"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Technical Foundation"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "6. Direct Brand Citation"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Get your key from <a href=\"%s\" target=\"_blank\" rel=\"noopener\">console.anthropic.com</a>."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Review recommendations categorized under technical, content, and authority vectors."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "GEO Optimization pillars (9-Point Check)"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Save Settings"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Insufficient permissions."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "No checklist analysis exists yet. Please run an AI Scan from the Command Center to populate this tab."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "API returned HTTP code %d."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "To optimize your site for 2026 generative models, create an ai.txt file. This file sits alongside robots.txt in your site root and explicitly permits and instructs AI engines on how to crawl and read content indices."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Content has a low density of natural, relational terms (under 10 references)."
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No action required. Your authority context is successfully mapped by AI crawlers."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Current Status:"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "No published posts were found on your site."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Could not write ai.txt in the WordPress root directory. Please check root write permissions."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "OpenRouter"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "Invalid response format from API."
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Test Connection"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "OpenAI"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Copy Code"
+msgstr ""
+
+#: includes/class-ai-reach-scanner.php
+msgid "7. Authority Sources Mentions"
+msgstr ""
+
+#: includes/class-ai-reach-admin.php
+msgid "Automatically run scans every 24 hours in the background using native WordPress scheduling."
+msgstr ""
+
