@@ -1,5 +1,5 @@
 === AI Reach (GEO Tracker) ===
-Contributors: expertwp
+Contributors: techeshta, alkesh7, bhattu
 Tags: generative engine optimization, ai visibility, robots.txt, chatgpt, gemini
 Requires at least: 5.8
 Tested up to: 7.0
