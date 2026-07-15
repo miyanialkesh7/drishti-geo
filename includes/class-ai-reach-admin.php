@@ -2,24 +2,42 @@
 /**
  * Class AI_Reach_Admin
  * Handles admin menu, asset enqueuing, AJAX callbacks, and dashboard rendering.
+ *
+ * @package AI_Reach_GEO_Tracker
  */
 
-// Restrict direct access
+declare(strict_types=1);
+
+// Restrict direct access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Handles admin menu, asset enqueuing, AJAX callbacks, and dashboard rendering.
+ */
 class AI_Reach_Admin {
 
 	/**
-	 * Constructor
+	 * Scanner collaborator, injectable for testing.
+	 *
+	 * @var AI_Reach_Scanner|null
 	 */
-	public function __construct() {
-		// Admin menus & styles
+	private ?AI_Reach_Scanner $scanner;
+
+	/**
+	 * Constructor
+	 *
+	 * @param AI_Reach_Scanner|null $scanner Optional scanner instance (for testing); defaults to a new one per use.
+	 */
+	public function __construct( ?AI_Reach_Scanner $scanner = null ) {
+		$this->scanner = $scanner;
+
+		// Admin menus & styles.
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 
-		// AJAX endpoints
+		// AJAX endpoints.
 		add_action( 'wp_ajax_ai_reach_test_connection', array( $this, 'ajax_test_connection' ) );
 		add_action( 'wp_ajax_ai_reach_run_engine_scan', array( $this, 'ajax_run_engine_scan' ) );
 		add_action( 'wp_ajax_ai_reach_save_scan_results', array( $this, 'ajax_save_scan_results' ) );
@@ -28,9 +46,21 @@ class AI_Reach_Admin {
 	}
 
 	/**
+	 * Resolve the scanner collaborator, constructing the default implementation on first use.
+	 *
+	 * Scan options (provider/key/model) can change between requests, so a fresh default instance
+	 * is built per call unless one was injected via the constructor.
+	 *
+	 * @return AI_Reach_Scanner
+	 */
+	private function get_scanner(): AI_Reach_Scanner {
+		return $this->scanner ?? new AI_Reach_Scanner();
+	}
+
+	/**
 	 * Add Admin Menu Item
 	 */
-	public function add_admin_menu() {
+	public function add_admin_menu(): void {
 		add_menu_page(
 			__( 'AI Reach Dashboard', 'ai-reach-geotracker' ),
 			__( 'AI Reach', 'ai-reach-geotracker' ),
@@ -43,9 +73,11 @@ class AI_Reach_Admin {
 	}
 
 	/**
-	 * Enqueue styles and scripts on our settings page
+	 * Enqueue styles and scripts on our settings page.
+	 *
+	 * @param string $hook Current admin page hook suffix.
 	 */
-	public function enqueue_admin_assets( $hook ) {
+	public function enqueue_admin_assets( string $hook ): void {
 		if ( 'toplevel_page_ai-reach' !== $hook ) {
 			return;
 		}
@@ -65,28 +97,65 @@ class AI_Reach_Admin {
 			true
 		);
 
-		// Localize values for script access
+		// Localize values for script access.
 		$provider_labels = array(
-			'openrouter' => 'OpenRouter',
-			'openai'     => 'OpenAI',
-			'gemini'     => 'Gemini',
-			'perplexity' => 'Perplexity',
-			'anthropic'  => 'Anthropic',
+			'openrouter' => __( 'OpenRouter', 'ai-reach-geotracker' ),
+			'openai'     => __( 'OpenAI', 'ai-reach-geotracker' ),
+			'gemini'     => __( 'Gemini', 'ai-reach-geotracker' ),
+			'perplexity' => __( 'Perplexity', 'ai-reach-geotracker' ),
+			'anthropic'  => __( 'Anthropic', 'ai-reach-geotracker' ),
 		);
 		$active_provider = get_option( 'ai_reach_api_provider', 'openrouter' );
-		wp_localize_script( 'ai-reach-script', 'aiReachData', array(
-			'ajax_url'             => admin_url( 'admin-ajax.php' ),
-			'nonce'                => wp_create_nonce( 'ai_reach_nonce' ),
-			'engines'              => array( 'openai', 'gemini', 'perplexity', 'claude', 'siri' ),
-			'active_provider_label' => isset( $provider_labels[ $active_provider ] ) ? $provider_labels[ $active_provider ] : 'AI API',
-		) );
+		wp_localize_script(
+			'ai-reach-script',
+			'aiReachData',
+			array(
+				'ajax_url'              => admin_url( 'admin-ajax.php' ),
+				'nonce'                 => wp_create_nonce( 'ai_reach_nonce' ),
+				'engines'               => array( 'openai', 'gemini', 'perplexity', 'claude', 'siri' ),
+				'active_provider_label' => isset( $provider_labels[ $active_provider ] ) ? $provider_labels[ $active_provider ] : __( 'AI API', 'ai-reach-geotracker' ),
+				'i18n'                  => array(
+					'enterApiKeyFirst'      => __( 'Please enter an API Key first.', 'ai-reach-geotracker' ),
+					'testing'               => __( 'Testing...', 'ai-reach-geotracker' ),
+					'testConnection'        => __( 'Test Connection', 'ai-reach-geotracker' ),
+					'networkError'          => __( 'Network communication error occurred.', 'ai-reach-geotracker' ),
+					'robotsFixFailed'       => __( 'Robots.txt fix request failed.', 'ai-reach-geotracker' ),
+					'autofixBlocker'        => __( 'Auto-Fix Blocker', 'ai-reach-geotracker' ),
+					'fixing'                => __( 'Fixing...', 'ai-reach-geotracker' ),
+					/* translators: %s: error message returned by the failed request. */
+					'errorPrefix'           => __( 'Error: %s', 'ai-reach-geotracker' ),
+					'generateFailed'        => __( 'Failed to send generate request.', 'ai-reach-geotracker' ),
+					'generateAitxt'         => __( 'Generate ai.txt File', 'ai-reach-geotracker' ),
+					'generating'            => __( 'Generating...', 'ai-reach-geotracker' ),
+					'scanning'              => __( 'Scanning...', 'ai-reach-geotracker' ),
+					/* translators: %s: active AI provider label (e.g. OpenAI, Gemini). */
+					'queryingModelVia'      => __( 'Querying model via %s...', 'ai-reach-geotracker' ),
+					'mentioned'             => __( '✅ Mentioned', 'ai-reach-geotracker' ),
+					'missing'               => __( '❌ Missing', 'ai-reach-geotracker' ),
+					'failed'                => __( '❌ Failed', 'ai-reach-geotracker' ),
+					'rebuildingScore'       => __( 'Rebuilding Score...', 'ai-reach-geotracker' ),
+					'doneReloading'         => __( 'Done! Reloading...', 'ai-reach-geotracker' ),
+					'runAiScan'             => __( 'Run AI Scan', 'ai-reach-geotracker' ),
+					/* translators: %s: error message returned by the failed request. */
+					'errorSavingResults'    => __( 'Error saving results: %s', 'ai-reach-geotracker' ),
+					'failedToConnectScores' => __( 'Failed to connect to the database to update scores.', 'ai-reach-geotracker' ),
+					'copied'                => __( 'Copied!', 'ai-reach-geotracker' ),
+					'copyFailed'            => __( 'Failed to copy. Please highlight and copy manually.', 'ai-reach-geotracker' ),
+					/* translators: %s: raw error message returned by a failed engine scan. */
+					'scanFailedPrefix'      => __( 'Scan failed: %s', 'ai-reach-geotracker' ),
+					'scanTimedOut'          => __( 'Scan failed: Network request timed out.', 'ai-reach-geotracker' ),
+					/* translators: %s: AI engine display name (e.g. OpenAI SearchGPT). */
+					'transcriptModalTitle'  => __( '%s Response', 'ai-reach-geotracker' ),
+				),
+			)
+		);
 	}
 
 
 	/**
 	 * Check local robots.txt and search visibility configurations
 	 */
-	public function check_robots_txt() {
+	public function check_robots_txt(): array {
 		$blocked = false;
 		$reason  = '';
 
@@ -94,7 +163,10 @@ class AI_Reach_Admin {
 		if ( '0' === get_option( 'blog_public', '1' ) ) {
 			$blocked = true;
 			$reason  = __( 'WordPress "Search Engine Visibility" option is set to discourage indexing, which inserts Disallow: / to your virtual robots.txt.', 'ai-reach-geotracker' );
-			return array( 'blocked' => true, 'reason' => $reason );
+			return array(
+				'blocked' => true,
+				'reason'  => $reason,
+			);
 		}
 
 		// 2. Check physical robots.txt file in root
@@ -103,18 +175,18 @@ class AI_Reach_Admin {
 			$wp_filesystem = $this->get_filesystem();
 			$content       = $wp_filesystem ? $wp_filesystem->get_contents( $robots_file ) : false;
 			if ( $content ) {
-				// Pattern check for Disallow: / under global or AI bot headings
+				// Pattern check for Disallow: / under global or AI bot headings.
 				if ( preg_match( '/User-agent:\s*\*\s*Disallow:\s*\/\s*($|\n)/i', $content ) ) {
 					$blocked = true;
 					$reason  = __( 'Physical robots.txt file exists and contains a global "Disallow: /" directive.', 'ai-reach-geotracker' );
 				} else {
-					// Check specific AI bots
+					// Check specific AI bots.
 					$ai_agents = array( 'GPTBot', 'Google-Extended', 'Anthropic-ai', 'PerplexityBot' );
 					foreach ( $ai_agents as $agent ) {
 						if ( preg_match( '/User-agent:\s*' . preg_quote( $agent, '/' ) . '.*Disallow:\s*\/\s*($|\n)/is', $content ) ) {
 							$blocked = true;
 							/* translators: %s: AI crawler user-agent name, e.g. "GPTBot" */
-							$reason  = sprintf( __( 'Physical robots.txt explicitly blocks "%s" from crawling.', 'ai-reach-geotracker' ), $agent );
+							$reason = sprintf( __( 'Physical robots.txt explicitly blocks "%s" from crawling.', 'ai-reach-geotracker' ), $agent );
 							break;
 						}
 					}
@@ -122,7 +194,10 @@ class AI_Reach_Admin {
 			}
 		}
 
-		return array( 'blocked' => $blocked, 'reason' => $reason );
+		return array(
+			'blocked' => $blocked,
+			'reason'  => $reason,
+		);
 	}
 
 	/**
@@ -143,13 +218,13 @@ class AI_Reach_Admin {
 			}
 			$content = $wp_filesystem->get_contents( $robots_file );
 			if ( $content ) {
-				// Remove global blocking
+				// Remove global blocking.
 				$content = preg_replace( '/User-agent:\s*\*\s*Disallow:\s*\/\s*/i', "User-agent: *\nDisallow:", $content );
 
-				// Remove specific AI bot blocks
+				// Remove specific AI bot blocks.
 				$ai_agents = array( 'GPTBot', 'Google-Extended', 'Anthropic-ai', 'PerplexityBot' );
 				foreach ( $ai_agents as $agent ) {
-					$content = preg_replace( '/User-agent:\s*' . preg_quote( $agent, '/' ) . '\s*Disallow:\s*\/\s*/i', "User-agent: " . $agent . "\nAllow: /", $content );
+					$content = preg_replace( '/User-agent:\s*' . preg_quote( $agent, '/' ) . '\s*Disallow:\s*\/\s*/i', 'User-agent: ' . $agent . "\nAllow: /", $content );
 				}
 
 				if ( ! $wp_filesystem->put_contents( $robots_file, $content, FS_CHMOD_FILE ) ) {
@@ -166,10 +241,10 @@ class AI_Reach_Admin {
 	 */
 	private function write_ai_txt() {
 		$aitxt_file = ABSPATH . 'ai.txt';
-		
-		$content = "# ai.txt - Generative Engine Optimization Rules\n";
-		$content .= "# Generated by AI Reach (GEO Tracker) on " . gmdate( 'Y-m-d H:i:s' ) . "\n\n";
-		
+
+		$content  = "# ai.txt - Generative Engine Optimization Rules\n";
+		$content .= '# Generated by AI Reach (GEO Tracker) on ' . gmdate( 'Y-m-d H:i:s' ) . "\n\n";
+
 		$ai_agents = array(
 			'GPTBot',
 			'Google-Extended',
@@ -182,11 +257,11 @@ class AI_Reach_Admin {
 		);
 
 		foreach ( $ai_agents as $agent ) {
-			$content .= "User-agent: " . $agent . "\n";
+			$content .= 'User-agent: ' . $agent . "\n";
 			$content .= "Allow: /\n\n";
 		}
 
-		$content .= "# End of AI Rules";
+		$content .= '# End of AI Rules';
 
 		$wp_filesystem = $this->get_filesystem();
 		if ( ! $wp_filesystem ) {
@@ -219,11 +294,14 @@ class AI_Reach_Admin {
 		return $wp_filesystem;
 	}
 
-	/* ========================================================
-	 * AJAX Handlers
-	 * ======================================================== */
+	// ======================================================================
+	// AJAX Handlers
+	// ======================================================================
 
-	public function ajax_test_connection() {
+	/**
+	 * AJAX: verify an API key/model combination for the given provider.
+	 */
+	public function ajax_test_connection(): void {
 		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -231,21 +309,28 @@ class AI_Reach_Admin {
 			return;
 		}
 
-		$api_key  = isset( $_POST['api_key'] )  ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) )  : '';
-		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) )        : 'openrouter';
-		$model    = isset( $_POST['model'] )    ? sanitize_text_field( wp_unslash( $_POST['model'] ) )    : '';
+		$api_key         = isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '';
+		$posted_provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : 'openrouter';
+		$model           = isset( $_POST['model'] ) ? sanitize_text_field( wp_unslash( $_POST['model'] ) ) : '';
 
-		$scanner = new AI_Reach_Scanner();
+		$allowed_providers = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
+		$provider          = in_array( $posted_provider, $allowed_providers, true ) ? $posted_provider : 'openrouter';
+
+		$scanner = $this->get_scanner();
 		$test    = $scanner->test_connection( $api_key, $provider, $model );
 
 		if ( is_wp_error( $test ) ) {
 			wp_send_json_error( array( 'message' => $test->get_error_message() ) );
+			return;
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Connection verified successfully!', 'ai-reach-geotracker' ) ) );
 	}
 
-	public function ajax_run_engine_scan() {
+	/**
+	 * AJAX: run a single-engine scan and return its result.
+	 */
+	public function ajax_run_engine_scan(): void {
 		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -253,22 +338,29 @@ class AI_Reach_Admin {
 			return;
 		}
 
-		$engine_id = isset( $_POST['engine_id'] ) ? sanitize_key( $_POST['engine_id'] ) : '';
-		if ( empty( $engine_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'Engine ID missing.', 'ai-reach-geotracker' ) ) );
+		$engine_id       = isset( $_POST['engine_id'] ) ? sanitize_key( wp_unslash( $_POST['engine_id'] ) ) : '';
+		$allowed_engines = array( 'openai', 'gemini', 'perplexity', 'claude', 'siri' );
+
+		if ( ! in_array( $engine_id, $allowed_engines, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown or missing engine ID.', 'ai-reach-geotracker' ) ) );
+			return;
 		}
 
-		$scanner = new AI_Reach_Scanner();
+		$scanner = $this->get_scanner();
 		$result  = $scanner->run_scan_for_engine( $engine_id );
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+			return;
 		}
 
 		wp_send_json_success( $result );
 	}
 
-	public function ajax_save_scan_results() {
+	/**
+	 * AJAX: persist client-collected scan results and recompute the checklist/score.
+	 */
+	public function ajax_save_scan_results(): void {
 		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -279,7 +371,7 @@ class AI_Reach_Admin {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each element is individually sanitized in the loop below.
 		$results = isset( $_POST['results'] ) ? wp_unslash( $_POST['results'] ) : array();
 
-		// Sanitize results array structure
+		// Sanitize results array structure.
 		$sanitized_results = array();
 		if ( is_array( $results ) ) {
 			foreach ( $results as $engine => $data ) {
@@ -296,24 +388,29 @@ class AI_Reach_Admin {
 		update_option( 'ai_reach_scan_results', $sanitized_results );
 		update_option( 'ai_reach_last_scan_time', current_time( 'mysql' ) );
 
-		$scanner   = new AI_Reach_Scanner();
+		$scanner   = $this->get_scanner();
 		$checklist = $scanner->calculate_9_point_checklist( $sanitized_results );
 		update_option( 'ai_reach_checklist_results', $checklist );
 
-		// Calculate overall score (0 to 100) based on checklist
+		// Calculate overall score (0 to 100) based on checklist.
 		$total_score = 0;
 		foreach ( $checklist as $pillar ) {
-			$total_score += intval( $pillar['score'] ); // Each of the 9 pillars returns up to 10 points
+			$total_score += intval( $pillar['score'] ); // Each of the 9 pillars returns up to 10 points.
 		}
 		$overall_score = round( ( $total_score / 90 ) * 100 );
 
-		wp_send_json_success( array(
-			'score'     => $overall_score,
-			'checklist' => $checklist
-		) );
+		wp_send_json_success(
+			array(
+				'score'     => $overall_score,
+				'checklist' => $checklist,
+			)
+		);
 	}
 
-	public function ajax_autofix_robots() {
+	/**
+	 * AJAX: apply the robots.txt/search-visibility auto-fix.
+	 */
+	public function ajax_autofix_robots(): void {
 		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -324,12 +421,16 @@ class AI_Reach_Admin {
 		$fix = $this->autofix_robots_txt();
 		if ( is_wp_error( $fix ) ) {
 			wp_send_json_error( array( 'message' => $fix->get_error_message() ) );
+			return;
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Robots.txt restrictions removed successfully!', 'ai-reach-geotracker' ) ) );
 	}
 
-	public function ajax_generate_aitxt() {
+	/**
+	 * AJAX: generate the ai.txt file in the site root.
+	 */
+	public function ajax_generate_aitxt(): void {
 		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -340,35 +441,36 @@ class AI_Reach_Admin {
 		$generate = $this->write_ai_txt();
 		if ( is_wp_error( $generate ) ) {
 			wp_send_json_error( array( 'message' => $generate->get_error_message() ) );
+			return;
 		}
 
 		wp_send_json_success( array( 'message' => __( 'ai.txt file generated successfully at the root directory!', 'ai-reach-geotracker' ) ) );
 	}
 
-	/* ========================================================
-	 * RENDER FUNCTIONS
-	 * ======================================================== */
+	// ======================================================================
+	// RENDER FUNCTIONS
+	// ======================================================================
 
 	/**
-	 * Render Admin Dashboard Page HTML
+	 * Render Admin Dashboard Page HTML.
 	 */
-	public function render_dashboard() {
-		// Handle settings form save
+	public function render_dashboard(): void {
+		// Handle settings form save.
 		if ( isset( $_POST['ai_reach_save_settings'] ) && check_admin_referer( 'ai_reach_settings_nonce' ) ) {
 			$brand_name_input = isset( $_POST['brand_name'] ) ? sanitize_text_field( wp_unslash( $_POST['brand_name'] ) ) : '';
 			$keywords_input   = isset( $_POST['keywords'] ) ? sanitize_text_field( wp_unslash( $_POST['keywords'] ) ) : '';
 			update_option( 'ai_reach_brand_name', $brand_name_input );
 			update_option( 'ai_reach_keywords', $keywords_input );
 
-			// API Provider
+			// API Provider.
 			$allowed_providers = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
-			$posted_provider    = isset( $_POST['api_provider'] ) ? sanitize_key( wp_unslash( $_POST['api_provider'] ) ) : '';
-			$provider = in_array( $posted_provider, $allowed_providers, true )
+			$posted_provider   = isset( $_POST['api_provider'] ) ? sanitize_key( wp_unslash( $_POST['api_provider'] ) ) : '';
+			$provider          = in_array( $posted_provider, $allowed_providers, true )
 				? $posted_provider
 				: 'openrouter';
 			update_option( 'ai_reach_api_provider', $provider );
 
-			// Per-provider API keys
+			// Per-provider API keys.
 			$provider_keys = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
 			foreach ( $provider_keys as $p ) {
 				$field = $p . '_key';
@@ -377,7 +479,7 @@ class AI_Reach_Admin {
 				}
 			}
 
-			// Per-provider models
+			// Per-provider models.
 			foreach ( $provider_keys as $p ) {
 				$field = $p . '_model';
 				if ( isset( $_POST[ $field ] ) ) {
@@ -391,43 +493,43 @@ class AI_Reach_Admin {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully!', 'ai-reach-geotracker' ) . '</p></div>';
 		}
 
-		// Retrieve data values
-		$brand_name      = get_option( 'ai_reach_brand_name', '' );
-		$keywords        = get_option( 'ai_reach_keywords', '' );
-		$daily_scan      = get_option( 'ai_reach_daily_scan', '0' );
+		// Retrieve data values.
+		$brand_name = get_option( 'ai_reach_brand_name', '' );
+		$keywords   = get_option( 'ai_reach_keywords', '' );
+		$daily_scan = get_option( 'ai_reach_daily_scan', '0' );
 
-		// Multi-provider settings
-		$api_provider    = get_option( 'ai_reach_api_provider', 'openrouter' );
-		$openrouter_key  = get_option( 'ai_reach_openrouter_key', '' );
-		$openai_key      = get_option( 'ai_reach_openai_key', '' );
-		$gemini_key      = get_option( 'ai_reach_gemini_key', '' );
-		$perplexity_key  = get_option( 'ai_reach_perplexity_key', '' );
-		$anthropic_key   = get_option( 'ai_reach_anthropic_key', '' );
+		// Multi-provider settings.
+		$api_provider     = get_option( 'ai_reach_api_provider', 'openrouter' );
+		$openrouter_key   = get_option( 'ai_reach_openrouter_key', '' );
+		$openai_key       = get_option( 'ai_reach_openai_key', '' );
+		$gemini_key       = get_option( 'ai_reach_gemini_key', '' );
+		$perplexity_key   = get_option( 'ai_reach_perplexity_key', '' );
+		$anthropic_key    = get_option( 'ai_reach_anthropic_key', '' );
 		$openrouter_model = get_option( 'ai_reach_openrouter_model', 'default' );
 		$openai_model     = get_option( 'ai_reach_openai_model', 'gpt-4o-mini' );
 		$gemini_model     = get_option( 'ai_reach_gemini_model', 'gemini-2.5-flash' );
 		$perplexity_model = get_option( 'ai_reach_perplexity_model', 'sonar' );
 		$anthropic_model  = get_option( 'ai_reach_anthropic_model', 'claude-3-5-sonnet-20241022' );
 
-		// Derive the active key for scan-readiness check
+		// Derive the active key for scan-readiness check.
 		$active_key_option = 'ai_reach_' . sanitize_key( $api_provider ) . '_key';
 		$api_key           = get_option( $active_key_option, '' );
-		
+
 		$scan_results = get_option( 'ai_reach_scan_results', array() );
 		$checklist    = get_option( 'ai_reach_checklist_results', array() );
 		$last_scan    = get_option( 'ai_reach_last_scan_time', '' );
 
-		// Calculate Mentions count
+		// Calculate Mentions count.
 		$mentions_count = 0;
 		if ( is_array( $scan_results ) ) {
 			foreach ( $scan_results as $res ) {
 				if ( isset( $res['mentioned'] ) && $res['mentioned'] ) {
-					$mentions_count++;
+					++$mentions_count;
 				}
 			}
 		}
 
-		// Calculate score (0 - 100)
+		// Calculate score (0 - 100).
 		$overall_score = 0;
 		if ( ! empty( $checklist ) ) {
 			$total_score = 0;
@@ -437,19 +539,20 @@ class AI_Reach_Admin {
 			$overall_score = round( ( $total_score / 90 ) * 100 );
 		}
 
-		// Check robots.txt block status
+		// Check robots.txt block status.
 		$robots_status = $this->check_robots_txt();
 		?>
 
 		<div id="ai-reach-dashboard" class="wrap">
 			<header class="dashboard-header">
 				<div class="header-main">
-					<h1 class="wp-heading-inline"><span class="dashicons dashicons-rss"></span> AI Reach <span class="badge">GEO Tracker</span></h1>
+					<h1 class="wp-heading-inline"><span class="dashicons dashicons-rss"></span> <?php esc_html_e( 'AI Reach', 'ai-reach-geotracker' ); ?> <span class="badge"><?php esc_html_e( 'GEO Tracker', 'ai-reach-geotracker' ); ?></span></h1>
 					<p class="tagline"><?php esc_html_e( 'Generative Engine Optimization & AI Visibility command center.', 'ai-reach-geotracker' ); ?></p>
 				</div>
 				<?php if ( ! empty( $last_scan ) ) : ?>
 					<div class="last-scan-time">
-						<span class="dashicons dashicons-clock"></span> <?php
+						<span class="dashicons dashicons-clock"></span> 
+						<?php
 						/* translators: %s: date and time of the last scan */
 						printf( esc_html__( 'Last Scan: %s', 'ai-reach-geotracker' ), esc_html( $last_scan ) );
 						?>
@@ -483,7 +586,18 @@ class AI_Reach_Admin {
 					<div class="quick-actions-bar">
 						<?php if ( empty( $api_key ) || empty( $brand_name ) || empty( $keywords ) ) : ?>
 							<div class="config-needed-msg">
-								<span class="dashicons dashicons-info"></span> <?php echo wp_kses( __( 'Please fill in settings in the <a href="#" class="go-to-settings-tab">Configuration Tab</a> before running a scan.', 'ai-reach-geotracker' ), array( 'a' => array( 'href' => array(), 'class' => array() ) ) ); ?>
+								<span class="dashicons dashicons-info"></span> 
+								<?php
+								echo wp_kses(
+									__( 'Please fill in settings in the <a href="#" class="go-to-settings-tab">Configuration Tab</a> before running a scan.', 'ai-reach-geotracker' ),
+									array(
+										'a' => array(
+											'href'  => array(),
+											'class' => array(),
+										),
+									)
+								);
+								?>
 							</div>
 							<button id="run-ai-scan-btn" class="btn-run-scan disabled-btn" disabled><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'Run AI Scan', 'ai-reach-geotracker' ); ?></button>
 						<?php else : ?>
@@ -524,18 +638,33 @@ class AI_Reach_Admin {
 					<div class="engines-grid">
 						<?php
 						$engines_config = array(
-							'openai'     => array( 'name' => 'OpenAI SearchGPT', 'sub' => 'gpt-4o' ),
-							'gemini'     => array( 'name' => 'Google Gemini', 'sub' => 'gemini-2.5-pro' ),
-							'perplexity' => array( 'name' => 'Perplexity AI', 'sub' => 'sonar-online' ),
-							'claude'     => array( 'name' => 'Anthropic Claude', 'sub' => 'claude-3.5-sonnet' ),
-							'siri'       => array( 'name' => 'Apple Intelligence', 'sub' => 'siri-llm-layer' )
+							'openai'     => array(
+								'name' => __( 'OpenAI SearchGPT', 'ai-reach-geotracker' ),
+								'sub'  => 'gpt-4o',
+							),
+							'gemini'     => array(
+								'name' => __( 'Google Gemini', 'ai-reach-geotracker' ),
+								'sub'  => 'gemini-2.5-pro',
+							),
+							'perplexity' => array(
+								'name' => __( 'Perplexity AI', 'ai-reach-geotracker' ),
+								'sub'  => 'sonar-online',
+							),
+							'claude'     => array(
+								'name' => __( 'Anthropic Claude', 'ai-reach-geotracker' ),
+								'sub'  => 'claude-3.5-sonnet',
+							),
+							'siri'       => array(
+								'name' => __( 'Apple Intelligence', 'ai-reach-geotracker' ),
+								'sub'  => 'siri-llm-layer',
+							),
 						);
 
 						foreach ( $engines_config as $id => $cfg ) :
-							$has_data  = isset( $scan_results[ $id ] );
-							$mentioned = $has_data && $scan_results[ $id ]['mentioned'];
+							$has_data   = isset( $scan_results[ $id ] );
+							$mentioned  = $has_data && $scan_results[ $id ]['mentioned'];
 							$transcript = $has_data ? $scan_results[ $id ]['transcript'] : '';
-							
+
 							$card_status_class = 'not-scanned';
 							if ( $has_data ) {
 								$card_status_class = $mentioned ? 'status-mentioned' : 'status-missing';
@@ -667,7 +796,7 @@ class AI_Reach_Admin {
 									</tr>
 
 									<?php
-									// Build provider config for key + model rows
+									// Build provider config for key + model rows.
 									$providers_ui = array(
 										'openrouter' => array(
 											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
@@ -676,14 +805,14 @@ class AI_Reach_Admin {
 											'model_val'   => $openrouter_model,
 											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
 										),
-										'openai' => array(
+										'openai'     => array(
 											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
 											'placeholder' => 'sk-...',
 											'key_val'     => $openai_key,
 											'model_val'   => $openai_model,
 											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
 										),
-										'gemini' => array(
+										'gemini'     => array(
 											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
 											'placeholder' => 'AIza...',
 											'key_val'     => $gemini_key,
@@ -697,7 +826,7 @@ class AI_Reach_Admin {
 											'model_val'   => $perplexity_model,
 											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
 										),
-										'anthropic' => array(
+										'anthropic'  => array(
 											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
 											'placeholder' => 'sk-ant-...',
 											'key_val'     => $anthropic_key,
@@ -706,12 +835,12 @@ class AI_Reach_Admin {
 										),
 									);
 									foreach ( $providers_ui as $p_key => $p_cfg ) :
-										$is_active  = ( $api_provider === $p_key );
-										$row_style  = $is_active ? '' : 'display:none;';
-										$models     = AI_Reach_Scanner::get_provider_models( $p_key );
-										$field_key  = esc_attr( $p_key ) . '_key';
+										$is_active   = ( $api_provider === $p_key );
+										$row_style   = $is_active ? '' : 'display:none;';
+										$models      = AI_Reach_Scanner::get_provider_models( $p_key );
+										$field_key   = esc_attr( $p_key ) . '_key';
 										$field_model = esc_attr( $p_key ) . '_model';
-									?>
+										?>
 									<tr class="provider-key-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
 										<th scope="row"><label for="<?php echo esc_attr( $field_key ); ?>"><?php echo esc_html( $p_cfg['label'] ); ?></label></th>
 										<td>
@@ -720,7 +849,20 @@ class AI_Reach_Admin {
 												<button type="button" class="button button-secondary test-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'ai-reach-geotracker' ); ?></button>
 											</div>
 											<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>"></span>
-											<p class="description"><?php echo wp_kses( $p_cfg['desc'], array( 'a' => array( 'href' => array(), 'target' => array(), 'rel' => array() ) ) ); ?></p>
+											<p class="description">
+											<?php
+											echo wp_kses(
+												$p_cfg['desc'],
+												array(
+													'a' => array(
+														'href' => array(),
+														'target' => array(),
+														'rel'  => array(),
+													),
+												)
+											);
+											?>
+																	</p>
 										</td>
 									</tr>
 									<tr class="provider-model-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
@@ -810,17 +952,20 @@ Allow: /</code></pre>
 	}
 
 	/**
-	 * Render Individual Checklist Accordion Item HTML
+	 * Render Individual Checklist Accordion Item HTML.
+	 *
+	 * @param array  $checklist Full 9-pillar checklist, keyed by pillar slug.
+	 * @param string $key       Pillar slug to render from the checklist.
 	 */
-	private function render_checklist_item( $checklist, $key ) {
+	private function render_checklist_item( array $checklist, string $key ): void {
 		if ( ! isset( $checklist[ $key ] ) ) {
 			return;
 		}
 
-		$item = $checklist[ $key ];
-		$is_opt = ( 'optimized' === $item['status'] );
-		$status_icon = $is_opt 
-			? '<span class="dashicons dashicons-yes-alt status-icon-green"></span>' 
+		$item         = $checklist[ $key ];
+		$is_opt       = ( 'optimized' === $item['status'] );
+		$status_icon  = $is_opt
+			? '<span class="dashicons dashicons-yes-alt status-icon-green"></span>'
 			: '<span class="dashicons dashicons-dismiss status-icon-red"></span>';
 		$status_class = $is_opt ? 'pillar-optimized' : 'pillar-action';
 		?>

@@ -8,6 +8,11 @@
 
 	jQuery(document).ready(function() {
 
+		// ---- %s placeholder formatter for localized strings ----
+		function formatString( str, value ) {
+			return str.replace( '%s', value );
+		}
+
 		// ---- Inline notice helper (replaces alert()) ----
 		function showNotice( msg, type ) {
 			var $notice = jQuery('<div class="notice notice-' + ( type || 'error' ) + ' is-dismissible ai-reach-inline-notice"><p>' + msg + '</p></div>');
@@ -32,6 +37,7 @@
 		var $modalContent = jQuery('#modal-transcript-content');
 		
 		var engines = aiReachData.engines; // ['openai', 'gemini', 'perplexity', 'claude', 'siri']
+		var i18n = aiReachData.i18n;
 		var scanResults = {};
 
 		/* ========================================================
@@ -93,11 +99,11 @@
 			$feedback.removeClass('success error').text('');
 
 			if (!apiKey) {
-				$feedback.addClass('error').text('Please enter an API Key first.');
+				$feedback.addClass('error').text(i18n.enterApiKeyFirst);
 				return;
 			}
 
-			$btn.prop('disabled', true).text('Testing...');
+			$btn.prop('disabled', true).text(i18n.testing);
 
 			jQuery.ajax({
 				url: aiReachData.ajax_url,
@@ -120,11 +126,11 @@
 					}
 				},
 				error: function() {
-					$feedback.addClass('error').text('Network communication error occurred.');
-					showNotice('Network communication error occurred.', 'error');
+					$feedback.addClass('error').text(i18n.networkError);
+					showNotice(i18n.networkError, 'error');
 				},
 				complete: function() {
-					$btn.prop('disabled', false).text('Test Connection');
+					$btn.prop('disabled', false).text(i18n.testConnection);
 				}
 			});
 		});
@@ -134,7 +140,7 @@
 		 * ======================================================== */
 		$autofixRobotsBtn.on('click', function(e) {
 			e.preventDefault();
-			$autofixRobotsBtn.prop('disabled', true).text('Fixing...');
+			$autofixRobotsBtn.prop('disabled', true).text(i18n.fixing);
 
 			jQuery.ajax({
 				url: aiReachData.ajax_url,
@@ -150,13 +156,13 @@
 							jQuery(this).addClass('hide-alert').removeClass('show-alert');
 						});
 					} else {
-						showNotice('Error: ' + response.data.message);
-						$autofixRobotsBtn.prop('disabled', false).text('Auto-Fix Blocker');
+						showNotice(formatString(i18n.errorPrefix, response.data.message));
+						$autofixRobotsBtn.prop('disabled', false).text(i18n.autofixBlocker);
 					}
 				},
 				error: function() {
-					showNotice('Robots.txt fix request failed.');
-					$autofixRobotsBtn.prop('disabled', false).text('Auto-Fix Blocker');
+					showNotice(i18n.robotsFixFailed);
+					$autofixRobotsBtn.prop('disabled', false).text(i18n.autofixBlocker);
 				}
 			});
 		});
@@ -168,7 +174,7 @@
 			e.preventDefault();
 			var $feedback = jQuery('#aitxt-feedback');
 			$feedback.removeClass('success error').text('');
-			$generateAitxtBtn.prop('disabled', true).text('Generating...');
+			$generateAitxtBtn.prop('disabled', true).text(i18n.generating);
 
 			jQuery.ajax({
 				url: aiReachData.ajax_url,
@@ -186,10 +192,10 @@
 					}
 				},
 				error: function() {
-					$feedback.addClass('error').text('Failed to send generate request.');
+					$feedback.addClass('error').text(i18n.generateFailed);
 				},
 				complete: function() {
-					$generateAitxtBtn.prop('disabled', false).text('Generate ai.txt File');
+					$generateAitxtBtn.prop('disabled', false).text(i18n.generateAitxt);
 				}
 			});
 		});
@@ -201,7 +207,7 @@
 			e.preventDefault();
 			
 			// Disable button during execution
-			$runScanBtn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Scanning...');
+			$runScanBtn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> ' + i18n.scanning);
 			
 			// Reset indicators and score display
 			jQuery('#total-mentions-ratio').text('0');
@@ -214,8 +220,8 @@
 					.addClass('scanning')
 					.attr('data-has-data', 'no');
 				
-				card.find('.engine-status-tag').html('<span class="tag tag-gray"><span class="pulse-dot"></span> Scanning...</span>');
-				card.find('.transcript-preview').text('Querying model via ' + (aiReachData.active_provider_label || 'AI API') + '...');
+				card.find('.engine-status-tag').html('<span class="tag tag-gray"><span class="pulse-dot"></span> ' + i18n.scanning + '</span>');
+				card.find('.transcript-preview').text(formatString(i18n.queryingModelVia, aiReachData.active_provider_label));
 				card.find('.view-transcript-btn').prop('disabled', true);
 				card.find('.hidden-transcript').text('');
 			});
@@ -255,7 +261,7 @@
 						// Record failure gracefully
 						scanResults[engineId] = {
 							mentioned: false,
-							transcript: 'Scan failed: ' + response.data.message
+							transcript: formatString(i18n.scanFailedPrefix, response.data.message)
 						};
 						updateEngineCardUI(card, false, scanResults[engineId].transcript, true);
 					}
@@ -263,7 +269,7 @@
 				error: function() {
 					scanResults[engineId] = {
 						mentioned: false,
-						transcript: 'Scan failed: Network request timed out.'
+						transcript: i18n.scanTimedOut
 					};
 					updateEngineCardUI(card, false, scanResults[engineId].transcript, true);
 				},
@@ -292,18 +298,18 @@
 
 			if (mentioned) {
 				card.addClass('status-mentioned');
-				card.find('.engine-status-tag').html('<span class="tag tag-green"><span class="pulse-dot green-dot"></span> ✅ Mentioned</span>');
+				card.find('.engine-status-tag').html('<span class="tag tag-green"><span class="pulse-dot green-dot"></span> ' + i18n.mentioned + '</span>');
 			} else {
 				card.addClass('status-missing');
-				var tagHtml = isError 
-					? '<span class="tag tag-red"><span class="pulse-dot red-dot"></span> ❌ Failed</span>' 
-					: '<span class="tag tag-red"><span class="pulse-dot red-dot"></span> ❌ Missing</span>';
+				var tagHtml = isError
+					? '<span class="tag tag-red"><span class="pulse-dot red-dot"></span> ' + i18n.failed + '</span>'
+					: '<span class="tag tag-red"><span class="pulse-dot red-dot"></span> ' + i18n.missing + '</span>';
 				card.find('.engine-status-tag').html(tagHtml);
 			}
 		}
 
 		function saveScanResultsAndReload() {
-			$runScanBtn.html('<span class="dashicons dashicons-update spin"></span> Rebuilding Score...');
+			$runScanBtn.html('<span class="dashicons dashicons-update spin"></span> ' + i18n.rebuildingScore);
 
 			jQuery.ajax({
 				url: aiReachData.ajax_url,
@@ -317,26 +323,26 @@
 				success: function(response) {
 					if (response.success) {
 						setRadialScore(response.data.score);
-						$runScanBtn.html('<span class="dashicons dashicons-yes-alt"></span> Done! Reloading...');
-						
+						$runScanBtn.html('<span class="dashicons dashicons-yes-alt"></span> ' + i18n.doneReloading);
+
 						// Delay reload briefly so the user sees completion states
 						setTimeout(function() {
 							window.location.reload();
 						}, 1200);
 					} else {
-						showNotice('Error saving results: ' + response.data.message);
+						showNotice(formatString(i18n.errorSavingResults, response.data.message));
 						resetScanButton();
 					}
 				},
 				error: function() {
-					showNotice('Failed to connect to the database to update scores.');
+					showNotice(i18n.failedToConnectScores);
 					resetScanButton();
 				}
 			});
 		}
 
 		function resetScanButton() {
-			$runScanBtn.prop('disabled', false).html('<span class="dashicons dashicons-performance"></span> Run AI Scan');
+			$runScanBtn.prop('disabled', false).html('<span class="dashicons dashicons-performance"></span> ' + i18n.runAiScan);
 		}
 
 		function setRadialScore(score) {
@@ -361,7 +367,7 @@
 			var modelName = card.find('.model-id').text();
 			var transcript = card.find('.hidden-transcript').text();
 			
-			$modalTitle.text(engineName + ' Response');
+			$modalTitle.text(formatString(i18n.transcriptModalTitle, engineName));
 			$modalEngineBadge.text(modelName);
 			$modalContent.val(transcript);
 			
@@ -395,12 +401,12 @@
 
 			navigator.clipboard.writeText(textToCopy).then(function() {
 				var originalText = $btn.text();
-				$btn.text('Copied!');
+				$btn.text(i18n.copied);
 				setTimeout(function() {
 					$btn.text(originalText);
 				}, 2000);
 			}, function() {
-				showNotice('Failed to copy. Please highlight and copy manually.');
+				showNotice(i18n.copyFailed);
 			});
 		});
 

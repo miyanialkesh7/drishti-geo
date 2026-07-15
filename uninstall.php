@@ -2,14 +2,18 @@
 /**
  * Uninstall AI Reach (GEO Tracker)
  * Runs when the plugin is deleted from the WP admin. Cleans up all options.
+ *
+ * @package AI_Reach_GEO_Tracker
  */
 
-// Only execute on uninstall context
+declare(strict_types=1);
+
+// Only execute on uninstall context.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-// Remove all plugin options
+// Remove all plugin options.
 $ai_reach_options = array(
 	'ai_reach_brand_name',
 	'ai_reach_keywords',
@@ -34,7 +38,7 @@ foreach ( $ai_reach_options as $ai_reach_option ) {
 	delete_option( $ai_reach_option );
 }
 
-// Clear scheduled cron event
+// Clear scheduled cron event.
 $ai_reach_cron_timestamp = wp_next_scheduled( 'ai_reach_daily_scan_cron' );
 if ( $ai_reach_cron_timestamp ) {
 	wp_unschedule_event( $ai_reach_cron_timestamp, 'ai_reach_daily_scan_cron' );
