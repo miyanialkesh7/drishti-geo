@@ -1027,7 +1027,6 @@
 	z-index: 999999;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .modal-overlay.modal-open {
@@ -1038,17 +1037,8 @@
 .modal-window {
 	background: var(--slate-900);
 	border: 1px solid var(--slate-700);
-	border-radius: 12px;
 	width: 90%;
 	max-width: 680px;
-	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-	overflow: hidden;
-	transform: scale(0.95);
-	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.modal-overlay.modal-open .modal-window {
-	transform: scale(1);
 }
 
 .modal-header {
@@ -1094,7 +1084,6 @@
 	height: 280px;
 	background: var(--slate-950);
 	border: 1px solid var(--slate-800);
-	border-radius: 6px;
 	padding: 16px;
 	color: var(--slate-200);
 	font-family: var(--font-mono);
@@ -1122,7 +1111,6 @@
 	color: var(--slate-200) !important;
 	height: auto !important;
 	padding: 6px 20px !important;
-	border-radius: 6px !important;
 	font-family: var(--font-sans) !important;
 	font-weight: 500 !important;
 }

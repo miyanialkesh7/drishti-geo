@@ -928,7 +928,6 @@ Allow: /</code></pre>
 					</div>
 				</section>
 			</main>
-		</div>
 
 		<!-- Transcript Viewer Modal -->
 		<div id="transcript-modal" class="modal-overlay">
@@ -947,6 +946,7 @@ Allow: /</code></pre>
 					<button class="button button-secondary modal-close-btn-bottom"><?php esc_html_e( 'Close', 'ai-reach-geotracker' ); ?></button>
 				</div>
 			</div>
+		</div>
 		</div>
 		<?php
 	}
