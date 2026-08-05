@@ -37,6 +37,9 @@ class AI_Reach_Admin {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 
+		// Process settings form submission early (before any HTML output), so we can safely redirect afterwards.
+		add_action( 'admin_init', array( $this, 'handle_settings_save' ) );
+
 		// AJAX endpoints.
 		add_action( 'wp_ajax_ai_reach_test_connection', array( $this, 'ajax_test_connection' ) );
 		add_action( 'wp_ajax_ai_reach_run_engine_scan', array( $this, 'ajax_run_engine_scan' ) );
@@ -452,44 +455,70 @@ class AI_Reach_Admin {
 	// ======================================================================
 
 	/**
+	 * Handle the settings form submission on 'admin_init' (i.e. before any HTML is sent),
+	 * so we can safely redirect afterwards (PRG pattern) and avoid form-resubmission on refresh.
+	 */
+	public function handle_settings_save(): void {
+		if ( ! isset( $_POST['ai_reach_save_settings'] ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		check_admin_referer( 'ai_reach_settings_nonce' );
+
+		$brand_name_input = isset( $_POST['brand_name'] ) ? sanitize_text_field( wp_unslash( $_POST['brand_name'] ) ) : '';
+		$keywords_input   = isset( $_POST['keywords'] ) ? sanitize_text_field( wp_unslash( $_POST['keywords'] ) ) : '';
+		update_option( 'ai_reach_brand_name', $brand_name_input );
+		update_option( 'ai_reach_keywords', $keywords_input );
+
+		// API Provider.
+		$allowed_providers = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
+		$posted_provider   = isset( $_POST['api_provider'] ) ? sanitize_key( wp_unslash( $_POST['api_provider'] ) ) : '';
+		$provider          = in_array( $posted_provider, $allowed_providers, true )
+			? $posted_provider
+			: 'openrouter';
+		update_option( 'ai_reach_api_provider', $provider );
+
+		// Per-provider API keys.
+		$provider_keys = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
+		foreach ( $provider_keys as $p ) {
+			$field = $p . '_key';
+			if ( isset( $_POST[ $field ] ) ) {
+				update_option( 'ai_reach_' . $p . '_key', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
+			}
+		}
+
+		// Per-provider models.
+		foreach ( $provider_keys as $p ) {
+			$field = $p . '_model';
+			if ( isset( $_POST[ $field ] ) ) {
+				update_option( 'ai_reach_' . $p . '_model', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
+			}
+		}
+
+		$daily = isset( $_POST['daily_scan'] ) ? '1' : '0';
+		update_option( 'ai_reach_daily_scan', $daily );
+
+		// PRG pattern: redirect back to the settings tab instead of re-rendering inline,
+		// so a page refresh never triggers a "confirm form resubmission" resave.
+		wp_safe_redirect(
+			add_query_arg(
+				array( 'ai_reach_updated' => '1' ),
+				admin_url( 'admin.php?page=ai-reach' )
+			) . '#tab-settings'
+		);
+		exit;
+	}
+
+	/**
 	 * Render Admin Dashboard Page HTML.
 	 */
 	public function render_dashboard(): void {
-		// Handle settings form save.
-		if ( isset( $_POST['ai_reach_save_settings'] ) && check_admin_referer( 'ai_reach_settings_nonce' ) ) {
-			$brand_name_input = isset( $_POST['brand_name'] ) ? sanitize_text_field( wp_unslash( $_POST['brand_name'] ) ) : '';
-			$keywords_input   = isset( $_POST['keywords'] ) ? sanitize_text_field( wp_unslash( $_POST['keywords'] ) ) : '';
-			update_option( 'ai_reach_brand_name', $brand_name_input );
-			update_option( 'ai_reach_keywords', $keywords_input );
-
-			// API Provider.
-			$allowed_providers = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
-			$posted_provider   = isset( $_POST['api_provider'] ) ? sanitize_key( wp_unslash( $_POST['api_provider'] ) ) : '';
-			$provider          = in_array( $posted_provider, $allowed_providers, true )
-				? $posted_provider
-				: 'openrouter';
-			update_option( 'ai_reach_api_provider', $provider );
-
-			// Per-provider API keys.
-			$provider_keys = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
-			foreach ( $provider_keys as $p ) {
-				$field = $p . '_key';
-				if ( isset( $_POST[ $field ] ) ) {
-					update_option( 'ai_reach_' . $p . '_key', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
-				}
-			}
-
-			// Per-provider models.
-			foreach ( $provider_keys as $p ) {
-				$field = $p . '_model';
-				if ( isset( $_POST[ $field ] ) ) {
-					update_option( 'ai_reach_' . $p . '_model', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
-				}
-			}
-
-			$daily = isset( $_POST['daily_scan'] ) ? '1' : '0';
-			update_option( 'ai_reach_daily_scan', $daily );
-
+		// Show a success notice after the PRG redirect from handle_settings_save().
+		if ( isset( $_GET['ai_reach_updated'] ) && '1' === $_GET['ai_reach_updated'] ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully!', 'ai-reach-geotracker' ) . '</p></div>';
 		}
 
