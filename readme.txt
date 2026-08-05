@@ -1,5 +1,5 @@
 === AI Reach (GEO Tracker) ===
-Contributors: techeshta, alkesh7, bhattu
+Contributors: techeshta, alkesh7, bhattu, seljabhalala
 Tags: generative engine optimization, ai visibility, robots.txt, chatgpt, gemini
 Requires at least: 5.8
 Tested up to: 7.0

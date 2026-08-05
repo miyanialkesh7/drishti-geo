@@ -580,7 +580,7 @@ class AI_Reach_Admin {
 				</div>
 				<?php if ( ! empty( $last_scan ) ) : ?>
 					<div class="last-scan-time">
-						<span class="dashicons dashicons-clock"></span> 
+						<span class="dashicons dashicons-clock"></span>
 						<?php
 						/* translators: %s: date and time of the last scan */
 						printf( esc_html__( 'Last Scan: %s', 'ai-reach-geotracker' ), esc_html( $last_scan ) );
@@ -615,7 +615,7 @@ class AI_Reach_Admin {
 					<div class="quick-actions-bar">
 						<?php if ( empty( $api_key ) || empty( $brand_name ) || empty( $keywords ) ) : ?>
 							<div class="config-needed-msg">
-								<span class="dashicons dashicons-info"></span> 
+								<span class="dashicons dashicons-info"></span>
 								<?php
 								echo wp_kses(
 									__( 'Please fill in settings in the <a href="#" class="go-to-settings-tab">Configuration Tab</a> before running a scan.', 'ai-reach-geotracker' ),
@@ -641,8 +641,8 @@ class AI_Reach_Admin {
 								<h3><?php esc_html_e( 'Overall AI Score', 'ai-reach-geotracker' ); ?></h3>
 								<div class="circle-container">
 									<svg class="progress-ring" width="120" height="120">
-										<circle class="progress-ring__circle-bg" stroke="#1e293b" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
-										<circle class="progress-ring__circle" id="overall-score-circle" stroke="#6366f1" stroke-dasharray="326.7" stroke-dashoffset="<?php echo esc_attr( 326.7 - ( 326.7 * ( $overall_score / 100 ) ) ); ?>" stroke-width="8" stroke-linecap="round" fill="transparent" r="52" cx="60" cy="60"/>
+										<circle class="progress-ring__circle-bg" stroke="#1e293b" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" />
+										<circle class="progress-ring__circle" id="overall-score-circle" stroke="#6366f1" stroke-dasharray="326.7" stroke-dashoffset="<?php echo esc_attr( 326.7 - ( 326.7 * ( $overall_score / 100 ) ) ); ?>" stroke-width="8" stroke-linecap="round" fill="transparent" r="52" cx="60" cy="60" />
 									</svg>
 									<div class="radial-score" id="overall-score-text"><?php echo esc_html( $overall_score ); ?>%</div>
 								</div>
@@ -742,7 +742,7 @@ class AI_Reach_Admin {
 				<section id="tab-checklist" class="tab-pane">
 					<h2 class="section-title"><?php esc_html_e( 'GEO Optimization pillars (9-Point Check)', 'ai-reach-geotracker' ); ?></h2>
 					<p class="section-desc"><?php esc_html_e( 'Review recommendations categorized under technical, content, and authority vectors.', 'ai-reach-geotracker' ); ?></p>
-					
+
 					<?php if ( empty( $checklist ) ) : ?>
 						<div class="empty-state-notice">
 							<span class="dashicons dashicons-clipboard"></span>
@@ -750,7 +750,7 @@ class AI_Reach_Admin {
 						</div>
 					<?php else : ?>
 						<div class="checklist-categories">
-							
+
 							<!-- CATEGORY A: TECHNICAL FOUNDATION -->
 							<div class="category-block">
 								<h3 class="cat-title"><span class="dashicons dashicons-admin-tools"></span> <?php esc_html_e( 'Technical Foundation', 'ai-reach-geotracker' ); ?></h3>
@@ -788,13 +788,13 @@ class AI_Reach_Admin {
 				<!-- SCREEN 3: CONFIGURATION PAGE -->
 				<section id="tab-settings" class="tab-pane">
 					<div class="settings-grid-layout">
-						
+
 						<!-- Form Configuration -->
 						<div class="settings-form-container">
 							<h2 class="section-title"><?php esc_html_e( 'General Settings', 'ai-reach-geotracker' ); ?></h2>
 							<form method="post" action="">
 								<?php wp_nonce_field( 'ai_reach_settings_nonce' ); ?>
-								
+
 								<table class="form-table custom-form-table">
 									<tr>
 										<th scope="row"><label for="brand_name"><?php esc_html_e( 'Brand/Entity Name', 'ai-reach-geotracker' ); ?></label></th>
@@ -870,41 +870,41 @@ class AI_Reach_Admin {
 										$field_key   = esc_attr( $p_key ) . '_key';
 										$field_model = esc_attr( $p_key ) . '_model';
 										?>
-									<tr class="provider-key-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
-										<th scope="row"><label for="<?php echo esc_attr( $field_key ); ?>"><?php echo esc_html( $p_cfg['label'] ); ?></label></th>
-										<td>
-											<div class="api-input-row">
-												<input name="<?php echo esc_attr( $field_key ); ?>" type="password" id="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $p_cfg['key_val'] ); ?>" class="regular-text provider-api-key" data-provider="<?php echo esc_attr( $p_key ); ?>" placeholder="<?php echo esc_attr( $p_cfg['placeholder'] ); ?>" />
-												<button type="button" class="button button-secondary test-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'ai-reach-geotracker' ); ?></button>
-											</div>
-											<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>"></span>
-											<p class="description">
-											<?php
-											echo wp_kses(
-												$p_cfg['desc'],
-												array(
-													'a' => array(
-														'href' => array(),
-														'target' => array(),
-														'rel'  => array(),
-													),
-												)
-											);
-											?>
-																	</p>
-										</td>
-									</tr>
-									<tr class="provider-model-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
-										<th scope="row"><label for="<?php echo esc_attr( $field_model ); ?>"><?php esc_html_e( 'Model', 'ai-reach-geotracker' ); ?></label></th>
-										<td>
-											<select name="<?php echo esc_attr( $field_model ); ?>" id="<?php echo esc_attr( $field_model ); ?>" class="regular-text">
-												<?php foreach ( $models as $m_val => $m_label ) : ?>
-													<option value="<?php echo esc_attr( $m_val ); ?>" <?php selected( $p_cfg['model_val'], $m_val ); ?>><?php echo esc_html( $m_label ); ?></option>
-												<?php endforeach; ?>
-											</select>
-											<p class="description"><?php esc_html_e( 'Select the AI model to use for all engine scans under this provider.', 'ai-reach-geotracker' ); ?></p>
-										</td>
-									</tr>
+										<tr class="provider-key-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
+											<th scope="row"><label for="<?php echo esc_attr( $field_key ); ?>"><?php echo esc_html( $p_cfg['label'] ); ?></label></th>
+											<td>
+												<div class="api-input-row">
+													<input name="<?php echo esc_attr( $field_key ); ?>" type="password" id="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $p_cfg['key_val'] ); ?>" class="regular-text provider-api-key" data-provider="<?php echo esc_attr( $p_key ); ?>" placeholder="<?php echo esc_attr( $p_cfg['placeholder'] ); ?>" />
+													<button type="button" class="button button-secondary test-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'ai-reach-geotracker' ); ?></button>
+												</div>
+												<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>"></span>
+												<p class="description">
+													<?php
+													echo wp_kses(
+														$p_cfg['desc'],
+														array(
+															'a' => array(
+																'href' => array(),
+																'target' => array(),
+																'rel'  => array(),
+															),
+														)
+													);
+													?>
+												</p>
+											</td>
+										</tr>
+										<tr class="provider-model-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
+											<th scope="row"><label for="<?php echo esc_attr( $field_model ); ?>"><?php esc_html_e( 'Model', 'ai-reach-geotracker' ); ?></label></th>
+											<td>
+												<select name="<?php echo esc_attr( $field_model ); ?>" id="<?php echo esc_attr( $field_model ); ?>" class="regular-text">
+													<?php foreach ( $models as $m_val => $m_label ) : ?>
+														<option value="<?php echo esc_attr( $m_val ); ?>" <?php selected( $p_cfg['model_val'], $m_val ); ?>><?php echo esc_html( $m_label ); ?></option>
+													<?php endforeach; ?>
+												</select>
+												<p class="description"><?php esc_html_e( 'Select the AI model to use for all engine scans under this provider.', 'ai-reach-geotracker' ); ?></p>
+											</td>
+										</tr>
 									<?php endforeach; ?>
 									<tr style="display:none;">
 										<td colspan="2"><span id="test-conn-feedback"></span></td>
@@ -937,7 +937,7 @@ class AI_Reach_Admin {
 								</div>
 								<div class="safety-card-body">
 									<p><?php esc_html_e( 'To optimize your site for 2026 generative models, create an ai.txt file. This file sits alongside robots.txt in your site root and explicitly permits and instructs AI engines on how to crawl and read content indices.', 'ai-reach-geotracker' ); ?></p>
-									
+
 									<div class="ai-txt-preview">
 										<pre><code># ai.txt sample
 User-agent: GPTBot
@@ -958,24 +958,24 @@ Allow: /</code></pre>
 				</section>
 			</main>
 
-		<!-- Transcript Viewer Modal -->
-		<div id="transcript-modal" class="modal-overlay">
-			<div class="modal-window">
-				<div class="modal-header">
-					<h3 id="modal-title"><?php esc_html_e( 'Engine Scan Transcript', 'ai-reach-geotracker' ); ?></h3>
-					<button class="modal-close-btn">&times;</button>
-				</div>
-				<div class="modal-body">
-					<div class="transcript-meta">
-						<span id="modal-engine-badge" class="badge"></span>
+			<!-- Transcript Viewer Modal -->
+			<div id="transcript-modal" class="modal-overlay">
+				<div class="modal-window">
+					<div class="modal-header">
+						<h3 id="modal-title"><?php esc_html_e( 'Engine Scan Transcript', 'ai-reach-geotracker' ); ?></h3>
+						<button class="modal-close-btn">&times;</button>
 					</div>
-					<textarea id="modal-transcript-content" readonly></textarea>
-				</div>
-				<div class="modal-footer">
-					<button class="button button-secondary modal-close-btn-bottom"><?php esc_html_e( 'Close', 'ai-reach-geotracker' ); ?></button>
+					<div class="modal-body">
+						<div class="transcript-meta">
+							<span id="modal-engine-badge" class="badge"></span>
+						</div>
+						<textarea id="modal-transcript-content" readonly></textarea>
+					</div>
+					<div class="modal-footer">
+						<button class="button button-secondary modal-close-btn-bottom"><?php esc_html_e( 'Close', 'ai-reach-geotracker' ); ?></button>
+					</div>
 				</div>
 			</div>
-		</div>
 		</div>
 		<?php
 	}
@@ -1015,7 +1015,7 @@ Allow: /</code></pre>
 			<div class="checklist-details-body">
 				<p class="checklist-desc"><strong><?php esc_html_e( 'Current Status:', 'ai-reach-geotracker' ); ?></strong> <?php echo esc_html( $item['description'] ); ?></p>
 				<p class="checklist-recom"><strong><?php esc_html_e( 'Action Step:', 'ai-reach-geotracker' ); ?></strong> <?php echo esc_html( $item['recommendation'] ); ?></p>
-				
+
 				<?php if ( ! empty( $item['snippet'] ) ) : ?>
 					<div class="code-snippet-box">
 						<div class="snippet-header">
