@@ -1,9 +1,9 @@
 <?php
 /**
- * Class AI_Reach_Admin
+ * Class Nectar_GEO_Admin
  * Handles admin menu, asset enqueuing, AJAX callbacks, and dashboard rendering.
  *
- * @package AI_Reach_GEO_Tracker
+ * @package Nectar_GEO
  */
 
 declare(strict_types=1);
@@ -16,21 +16,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Handles admin menu, asset enqueuing, AJAX callbacks, and dashboard rendering.
  */
-class AI_Reach_Admin {
+class Nectar_GEO_Admin {
 
 	/**
 	 * Scanner collaborator, injectable for testing.
 	 *
-	 * @var AI_Reach_Scanner|null
+	 * @var Nectar_GEO_Scanner|null
 	 */
-	private ?AI_Reach_Scanner $scanner;
+	private ?Nectar_GEO_Scanner $scanner;
 
 	/**
 	 * Constructor
 	 *
-	 * @param AI_Reach_Scanner|null $scanner Optional scanner instance (for testing); defaults to a new one per use.
+	 * @param Nectar_GEO_Scanner|null $scanner Optional scanner instance (for testing); defaults to a new one per use.
 	 */
-	public function __construct( ?AI_Reach_Scanner $scanner = null ) {
+	public function __construct( ?Nectar_GEO_Scanner $scanner = null ) {
 		$this->scanner = $scanner;
 
 		// Admin menus & styles.
@@ -41,11 +41,11 @@ class AI_Reach_Admin {
 		add_action( 'admin_init', array( $this, 'handle_settings_save' ) );
 
 		// AJAX endpoints.
-		add_action( 'wp_ajax_ai_reach_test_connection', array( $this, 'ajax_test_connection' ) );
-		add_action( 'wp_ajax_ai_reach_run_engine_scan', array( $this, 'ajax_run_engine_scan' ) );
-		add_action( 'wp_ajax_ai_reach_save_scan_results', array( $this, 'ajax_save_scan_results' ) );
-		add_action( 'wp_ajax_ai_reach_autofix_robots', array( $this, 'ajax_autofix_robots' ) );
-		add_action( 'wp_ajax_ai_reach_generate_aitxt', array( $this, 'ajax_generate_aitxt' ) );
+		add_action( 'wp_ajax_nectar_geo_test_connection', array( $this, 'ajax_test_connection' ) );
+		add_action( 'wp_ajax_nectar_geo_run_engine_scan', array( $this, 'ajax_run_engine_scan' ) );
+		add_action( 'wp_ajax_nectar_geo_save_scan_results', array( $this, 'ajax_save_scan_results' ) );
+		add_action( 'wp_ajax_nectar_geo_autofix_robots', array( $this, 'ajax_autofix_robots' ) );
+		add_action( 'wp_ajax_nectar_geo_generate_aitxt', array( $this, 'ajax_generate_aitxt' ) );
 	}
 
 	/**
@@ -54,10 +54,10 @@ class AI_Reach_Admin {
 	 * Scan options (provider/key/model) can change between requests, so a fresh default instance
 	 * is built per call unless one was injected via the constructor.
 	 *
-	 * @return AI_Reach_Scanner
+	 * @return Nectar_GEO_Scanner
 	 */
-	private function get_scanner(): AI_Reach_Scanner {
-		return $this->scanner ?? new AI_Reach_Scanner();
+	private function get_scanner(): Nectar_GEO_Scanner {
+		return $this->scanner ?? new Nectar_GEO_Scanner();
 	}
 
 	/**
@@ -65,10 +65,10 @@ class AI_Reach_Admin {
 	 */
 	public function add_admin_menu(): void {
 		add_menu_page(
-			__( 'AI Reach Dashboard', 'ai-reach-geotracker' ),
-			__( 'AI Reach', 'ai-reach-geotracker' ),
+			__( 'Nectar GEO Dashboard', 'nectar-geo' ),
+			__( 'Nectar GEO', 'nectar-geo' ),
 			'manage_options',
-			'ai-reach',
+			'nectar-geo',
 			array( $this, 'render_dashboard' ),
 			'dashicons-chart-area',
 			30
@@ -81,74 +81,74 @@ class AI_Reach_Admin {
 	 * @param string $hook Current admin page hook suffix.
 	 */
 	public function enqueue_admin_assets( string $hook ): void {
-		if ( 'toplevel_page_ai-reach' !== $hook ) {
+		if ( 'toplevel_page_nectar-geo' !== $hook ) {
 			return;
 		}
 
 		wp_enqueue_style(
-			'ai-reach-style',
-			AI_REACH_URL . 'admin/css/admin-style.css',
+			'nectar-geo-style',
+			NECTAR_GEO_URL . 'admin/css/admin-style.css',
 			array(),
-			AI_REACH_VERSION
+			NECTAR_GEO_VERSION
 		);
 
 		wp_enqueue_script(
-			'ai-reach-script',
-			AI_REACH_URL . 'admin/js/admin-script.js',
+			'nectar-geo-script',
+			NECTAR_GEO_URL . 'admin/js/admin-script.js',
 			array( 'jquery' ),
-			AI_REACH_VERSION,
+			NECTAR_GEO_VERSION,
 			true
 		);
 
 		// Localize values for script access.
 		$provider_labels = array(
-			'openrouter' => __( 'OpenRouter', 'ai-reach-geotracker' ),
-			'openai'     => __( 'OpenAI', 'ai-reach-geotracker' ),
-			'gemini'     => __( 'Gemini', 'ai-reach-geotracker' ),
-			'perplexity' => __( 'Perplexity', 'ai-reach-geotracker' ),
-			'anthropic'  => __( 'Anthropic', 'ai-reach-geotracker' ),
+			'openrouter' => __( 'OpenRouter', 'nectar-geo' ),
+			'openai'     => __( 'OpenAI', 'nectar-geo' ),
+			'gemini'     => __( 'Gemini', 'nectar-geo' ),
+			'perplexity' => __( 'Perplexity', 'nectar-geo' ),
+			'anthropic'  => __( 'Anthropic', 'nectar-geo' ),
 		);
-		$active_provider = get_option( 'ai_reach_api_provider', 'openrouter' );
+		$active_provider = get_option( 'nectar_geo_api_provider', 'openrouter' );
 		wp_localize_script(
-			'ai-reach-script',
-			'aiReachData',
+			'nectar-geo-script',
+			'nectarGeoData',
 			array(
 				'ajax_url'              => admin_url( 'admin-ajax.php' ),
-				'nonce'                 => wp_create_nonce( 'ai_reach_nonce' ),
+				'nonce'                 => wp_create_nonce( 'nectar_geo_nonce' ),
 				'engines'               => array( 'openai', 'gemini', 'perplexity', 'claude', 'siri' ),
-				'active_provider_label' => isset( $provider_labels[ $active_provider ] ) ? $provider_labels[ $active_provider ] : __( 'AI API', 'ai-reach-geotracker' ),
+				'active_provider_label' => isset( $provider_labels[ $active_provider ] ) ? $provider_labels[ $active_provider ] : __( 'AI API', 'nectar-geo' ),
 				'i18n'                  => array(
-					'enterApiKeyFirst'      => __( 'Please enter an API Key first.', 'ai-reach-geotracker' ),
-					'testing'               => __( 'Testing...', 'ai-reach-geotracker' ),
-					'testConnection'        => __( 'Test Connection', 'ai-reach-geotracker' ),
-					'networkError'          => __( 'Network communication error occurred.', 'ai-reach-geotracker' ),
-					'robotsFixFailed'       => __( 'Robots.txt fix request failed.', 'ai-reach-geotracker' ),
-					'autofixBlocker'        => __( 'Auto-Fix Blocker', 'ai-reach-geotracker' ),
-					'fixing'                => __( 'Fixing...', 'ai-reach-geotracker' ),
+					'enterApiKeyFirst'      => __( 'Please enter an API Key first.', 'nectar-geo' ),
+					'testing'               => __( 'Testing...', 'nectar-geo' ),
+					'testConnection'        => __( 'Test Connection', 'nectar-geo' ),
+					'networkError'          => __( 'Network communication error occurred.', 'nectar-geo' ),
+					'robotsFixFailed'       => __( 'Robots.txt fix request failed.', 'nectar-geo' ),
+					'autofixBlocker'        => __( 'Auto-Fix Blocker', 'nectar-geo' ),
+					'fixing'                => __( 'Fixing...', 'nectar-geo' ),
 					/* translators: %s: error message returned by the failed request. */
-					'errorPrefix'           => __( 'Error: %s', 'ai-reach-geotracker' ),
-					'generateFailed'        => __( 'Failed to send generate request.', 'ai-reach-geotracker' ),
-					'generateAitxt'         => __( 'Generate ai.txt File', 'ai-reach-geotracker' ),
-					'generating'            => __( 'Generating...', 'ai-reach-geotracker' ),
-					'scanning'              => __( 'Scanning...', 'ai-reach-geotracker' ),
+					'errorPrefix'           => __( 'Error: %s', 'nectar-geo' ),
+					'generateFailed'        => __( 'Failed to send generate request.', 'nectar-geo' ),
+					'generateAitxt'         => __( 'Generate ai.txt File', 'nectar-geo' ),
+					'generating'            => __( 'Generating...', 'nectar-geo' ),
+					'scanning'              => __( 'Scanning...', 'nectar-geo' ),
 					/* translators: %s: active AI provider label (e.g. OpenAI, Gemini). */
-					'queryingModelVia'      => __( 'Querying model via %s...', 'ai-reach-geotracker' ),
-					'mentioned'             => __( '✅ Mentioned', 'ai-reach-geotracker' ),
-					'missing'               => __( '❌ Missing', 'ai-reach-geotracker' ),
-					'failed'                => __( '❌ Failed', 'ai-reach-geotracker' ),
-					'rebuildingScore'       => __( 'Rebuilding Score...', 'ai-reach-geotracker' ),
-					'doneReloading'         => __( 'Done! Reloading...', 'ai-reach-geotracker' ),
-					'runAiScan'             => __( 'Run AI Scan', 'ai-reach-geotracker' ),
+					'queryingModelVia'      => __( 'Querying model via %s...', 'nectar-geo' ),
+					'mentioned'             => __( '✅ Mentioned', 'nectar-geo' ),
+					'missing'               => __( '❌ Missing', 'nectar-geo' ),
+					'failed'                => __( '❌ Failed', 'nectar-geo' ),
+					'rebuildingScore'       => __( 'Rebuilding Score...', 'nectar-geo' ),
+					'doneReloading'         => __( 'Done! Reloading...', 'nectar-geo' ),
+					'runAiScan'             => __( 'Run AI Scan', 'nectar-geo' ),
 					/* translators: %s: error message returned by the failed request. */
-					'errorSavingResults'    => __( 'Error saving results: %s', 'ai-reach-geotracker' ),
-					'failedToConnectScores' => __( 'Failed to connect to the database to update scores.', 'ai-reach-geotracker' ),
-					'copied'                => __( 'Copied!', 'ai-reach-geotracker' ),
-					'copyFailed'            => __( 'Failed to copy. Please highlight and copy manually.', 'ai-reach-geotracker' ),
+					'errorSavingResults'    => __( 'Error saving results: %s', 'nectar-geo' ),
+					'failedToConnectScores' => __( 'Failed to connect to the database to update scores.', 'nectar-geo' ),
+					'copied'                => __( 'Copied!', 'nectar-geo' ),
+					'copyFailed'            => __( 'Failed to copy. Please highlight and copy manually.', 'nectar-geo' ),
 					/* translators: %s: raw error message returned by a failed engine scan. */
-					'scanFailedPrefix'      => __( 'Scan failed: %s', 'ai-reach-geotracker' ),
-					'scanTimedOut'          => __( 'Scan failed: Network request timed out.', 'ai-reach-geotracker' ),
+					'scanFailedPrefix'      => __( 'Scan failed: %s', 'nectar-geo' ),
+					'scanTimedOut'          => __( 'Scan failed: Network request timed out.', 'nectar-geo' ),
 					/* translators: %s: AI engine display name (e.g. OpenAI SearchGPT). */
-					'transcriptModalTitle'  => __( '%s Response', 'ai-reach-geotracker' ),
+					'transcriptModalTitle'  => __( '%s Response', 'nectar-geo' ),
 				),
 			)
 		);
@@ -165,7 +165,7 @@ class AI_Reach_Admin {
 		// 1. Check WordPress setting for Search Engine Visibility
 		if ( '0' === get_option( 'blog_public', '1' ) ) {
 			$blocked = true;
-			$reason  = __( 'WordPress "Search Engine Visibility" option is set to discourage indexing, which inserts Disallow: / to your virtual robots.txt.', 'ai-reach-geotracker' );
+			$reason  = __( 'WordPress "Search Engine Visibility" option is set to discourage indexing, which inserts Disallow: / to your virtual robots.txt.', 'nectar-geo' );
 			return array(
 				'blocked' => true,
 				'reason'  => $reason,
@@ -181,7 +181,7 @@ class AI_Reach_Admin {
 				// Pattern check for Disallow: / under global or AI bot headings.
 				if ( preg_match( '/User-agent:\s*\*\s*Disallow:\s*\/\s*($|\n)/i', $content ) ) {
 					$blocked = true;
-					$reason  = __( 'Physical robots.txt file exists and contains a global "Disallow: /" directive.', 'ai-reach-geotracker' );
+					$reason  = __( 'Physical robots.txt file exists and contains a global "Disallow: /" directive.', 'nectar-geo' );
 				} else {
 					// Check specific AI bots.
 					$ai_agents = array( 'GPTBot', 'Google-Extended', 'Anthropic-ai', 'PerplexityBot' );
@@ -189,7 +189,7 @@ class AI_Reach_Admin {
 						if ( preg_match( '/User-agent:\s*' . preg_quote( $agent, '/' ) . '.*Disallow:\s*\/\s*($|\n)/is', $content ) ) {
 							$blocked = true;
 							/* translators: %s: AI crawler user-agent name, e.g. "GPTBot" */
-							$reason = sprintf( __( 'Physical robots.txt explicitly blocks "%s" from crawling.', 'ai-reach-geotracker' ), $agent );
+							$reason = sprintf( __( 'Physical robots.txt explicitly blocks "%s" from crawling.', 'nectar-geo' ), $agent );
 							break;
 						}
 					}
@@ -217,7 +217,7 @@ class AI_Reach_Admin {
 		if ( file_exists( $robots_file ) ) {
 			$wp_filesystem = $this->get_filesystem();
 			if ( ! $wp_filesystem ) {
-				return new WP_Error( 'fs_unavailable', __( 'Could not access the filesystem to edit robots.txt. Please edit the file manually.', 'ai-reach-geotracker' ) );
+				return new WP_Error( 'fs_unavailable', __( 'Could not access the filesystem to edit robots.txt. Please edit the file manually.', 'nectar-geo' ) );
 			}
 			$content = $wp_filesystem->get_contents( $robots_file );
 			if ( $content ) {
@@ -231,7 +231,7 @@ class AI_Reach_Admin {
 				}
 
 				if ( ! $wp_filesystem->put_contents( $robots_file, $content, FS_CHMOD_FILE ) ) {
-					return new WP_Error( 'write_failed', __( 'Could not write to physical robots.txt file. Please check file permissions or edit manually.', 'ai-reach-geotracker' ) );
+					return new WP_Error( 'write_failed', __( 'Could not write to physical robots.txt file. Please check file permissions or edit manually.', 'nectar-geo' ) );
 				}
 			}
 		}
@@ -246,7 +246,7 @@ class AI_Reach_Admin {
 		$aitxt_file = ABSPATH . 'ai.txt';
 
 		$content  = "# ai.txt - Generative Engine Optimization Rules\n";
-		$content .= '# Generated by AI Reach (GEO Tracker) on ' . gmdate( 'Y-m-d H:i:s' ) . "\n\n";
+		$content .= '# Generated by Nectar GEO on ' . gmdate( 'Y-m-d H:i:s' ) . "\n\n";
 
 		$ai_agents = array(
 			'GPTBot',
@@ -268,10 +268,10 @@ class AI_Reach_Admin {
 
 		$wp_filesystem = $this->get_filesystem();
 		if ( ! $wp_filesystem ) {
-			return new WP_Error( 'fs_unavailable', __( 'Could not access the filesystem to write ai.txt. Please check root write permissions.', 'ai-reach-geotracker' ) );
+			return new WP_Error( 'fs_unavailable', __( 'Could not access the filesystem to write ai.txt. Please check root write permissions.', 'nectar-geo' ) );
 		}
 		if ( ! $wp_filesystem->put_contents( $aitxt_file, $content, FS_CHMOD_FILE ) ) {
-			return new WP_Error( 'write_failed', __( 'Could not write ai.txt in the WordPress root directory. Please check root write permissions.', 'ai-reach-geotracker' ) );
+			return new WP_Error( 'write_failed', __( 'Could not write ai.txt in the WordPress root directory. Please check root write permissions.', 'nectar-geo' ) );
 		}
 
 		return true;
@@ -305,10 +305,10 @@ class AI_Reach_Admin {
 	 * AJAX: verify an API key/model combination for the given provider.
 	 */
 	public function ajax_test_connection(): void {
-		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
+		check_ajax_referer( 'nectar_geo_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ai-reach-geotracker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'nectar-geo' ) ) );
 			return;
 		}
 
@@ -327,17 +327,17 @@ class AI_Reach_Admin {
 			return;
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Connection verified successfully!', 'ai-reach-geotracker' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Connection verified successfully!', 'nectar-geo' ) ) );
 	}
 
 	/**
 	 * AJAX: run a single-engine scan and return its result.
 	 */
 	public function ajax_run_engine_scan(): void {
-		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
+		check_ajax_referer( 'nectar_geo_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ai-reach-geotracker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'nectar-geo' ) ) );
 			return;
 		}
 
@@ -345,7 +345,7 @@ class AI_Reach_Admin {
 		$allowed_engines = array( 'openai', 'gemini', 'perplexity', 'claude', 'siri' );
 
 		if ( ! in_array( $engine_id, $allowed_engines, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unknown or missing engine ID.', 'ai-reach-geotracker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Unknown or missing engine ID.', 'nectar-geo' ) ) );
 			return;
 		}
 
@@ -364,10 +364,10 @@ class AI_Reach_Admin {
 	 * AJAX: persist client-collected scan results and recompute the checklist/score.
 	 */
 	public function ajax_save_scan_results(): void {
-		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
+		check_ajax_referer( 'nectar_geo_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ai-reach-geotracker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'nectar-geo' ) ) );
 			return;
 		}
 
@@ -388,12 +388,12 @@ class AI_Reach_Admin {
 			}
 		}
 
-		update_option( 'ai_reach_scan_results', $sanitized_results );
-		update_option( 'ai_reach_last_scan_time', current_time( 'mysql' ) );
+		update_option( 'nectar_geo_scan_results', $sanitized_results );
+		update_option( 'nectar_geo_last_scan_time', current_time( 'mysql' ) );
 
 		$scanner   = $this->get_scanner();
 		$checklist = $scanner->calculate_9_point_checklist( $sanitized_results );
-		update_option( 'ai_reach_checklist_results', $checklist );
+		update_option( 'nectar_geo_checklist_results', $checklist );
 
 		// Calculate overall score (0 to 100) based on checklist.
 		$total_score = 0;
@@ -414,10 +414,10 @@ class AI_Reach_Admin {
 	 * AJAX: apply the robots.txt/search-visibility auto-fix.
 	 */
 	public function ajax_autofix_robots(): void {
-		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
+		check_ajax_referer( 'nectar_geo_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ai-reach-geotracker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'nectar-geo' ) ) );
 			return;
 		}
 
@@ -427,17 +427,17 @@ class AI_Reach_Admin {
 			return;
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Robots.txt restrictions removed successfully!', 'ai-reach-geotracker' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Robots.txt restrictions removed successfully!', 'nectar-geo' ) ) );
 	}
 
 	/**
 	 * AJAX: generate the ai.txt file in the site root.
 	 */
 	public function ajax_generate_aitxt(): void {
-		check_ajax_referer( 'ai_reach_nonce', 'nonce' );
+		check_ajax_referer( 'nectar_geo_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ai-reach-geotracker' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'nectar-geo' ) ) );
 			return;
 		}
 
@@ -447,7 +447,7 @@ class AI_Reach_Admin {
 			return;
 		}
 
-		wp_send_json_success( array( 'message' => __( 'ai.txt file generated successfully at the root directory!', 'ai-reach-geotracker' ) ) );
+		wp_send_json_success( array( 'message' => __( 'ai.txt file generated successfully at the root directory!', 'nectar-geo' ) ) );
 	}
 
 	// ======================================================================
@@ -459,7 +459,7 @@ class AI_Reach_Admin {
 	 * so we can safely redirect afterwards (PRG pattern) and avoid form-resubmission on refresh.
 	 */
 	public function handle_settings_save(): void {
-		if ( ! isset( $_POST['ai_reach_save_settings'] ) ) {
+		if ( ! isset( $_POST['nectar_geo_save_settings'] ) ) {
 			return;
 		}
 
@@ -467,12 +467,12 @@ class AI_Reach_Admin {
 			return;
 		}
 
-		check_admin_referer( 'ai_reach_settings_nonce' );
+		check_admin_referer( 'nectar_geo_settings_nonce' );
 
 		$brand_name_input = isset( $_POST['brand_name'] ) ? sanitize_text_field( wp_unslash( $_POST['brand_name'] ) ) : '';
 		$keywords_input   = isset( $_POST['keywords'] ) ? sanitize_text_field( wp_unslash( $_POST['keywords'] ) ) : '';
-		update_option( 'ai_reach_brand_name', $brand_name_input );
-		update_option( 'ai_reach_keywords', $keywords_input );
+		update_option( 'nectar_geo_brand_name', $brand_name_input );
+		update_option( 'nectar_geo_keywords', $keywords_input );
 
 		// API Provider.
 		$allowed_providers = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
@@ -480,14 +480,14 @@ class AI_Reach_Admin {
 		$provider          = in_array( $posted_provider, $allowed_providers, true )
 			? $posted_provider
 			: 'openrouter';
-		update_option( 'ai_reach_api_provider', $provider );
+		update_option( 'nectar_geo_api_provider', $provider );
 
 		// Per-provider API keys.
 		$provider_keys = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
 		foreach ( $provider_keys as $p ) {
 			$field = $p . '_key';
 			if ( isset( $_POST[ $field ] ) ) {
-				update_option( 'ai_reach_' . $p . '_key', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
+				update_option( 'nectar_geo_' . $p . '_key', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
 
@@ -495,19 +495,19 @@ class AI_Reach_Admin {
 		foreach ( $provider_keys as $p ) {
 			$field = $p . '_model';
 			if ( isset( $_POST[ $field ] ) ) {
-				update_option( 'ai_reach_' . $p . '_model', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
+				update_option( 'nectar_geo_' . $p . '_model', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
 
 		$daily = isset( $_POST['daily_scan'] ) ? '1' : '0';
-		update_option( 'ai_reach_daily_scan', $daily );
+		update_option( 'nectar_geo_daily_scan', $daily );
 
 		// PRG pattern: redirect back to the settings tab instead of re-rendering inline,
 		// so a page refresh never triggers a "confirm form resubmission" resave.
 		wp_safe_redirect(
 			add_query_arg(
-				array( 'ai_reach_updated' => '1' ),
-				admin_url( 'admin.php?page=ai-reach' )
+				array( 'nectar_geo_updated' => '1' ),
+				admin_url( 'admin.php?page=nectar-geo' )
 			) . '#tab-settings'
 		);
 		exit;
@@ -518,35 +518,36 @@ class AI_Reach_Admin {
 	 */
 	public function render_dashboard(): void {
 		// Show a success notice after the PRG redirect from handle_settings_save().
-		if ( isset( $_GET['ai_reach_updated'] ) && '1' === $_GET['ai_reach_updated'] ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully!', 'ai-reach-geotracker' ) . '</p></div>';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display flag, no data is processed or saved here.
+		if ( isset( $_GET['nectar_geo_updated'] ) && '1' === $_GET['nectar_geo_updated'] ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully!', 'nectar-geo' ) . '</p></div>';
 		}
 
 		// Retrieve data values.
-		$brand_name = get_option( 'ai_reach_brand_name', '' );
-		$keywords   = get_option( 'ai_reach_keywords', '' );
-		$daily_scan = get_option( 'ai_reach_daily_scan', '0' );
+		$brand_name = get_option( 'nectar_geo_brand_name', '' );
+		$keywords   = get_option( 'nectar_geo_keywords', '' );
+		$daily_scan = get_option( 'nectar_geo_daily_scan', '0' );
 
 		// Multi-provider settings.
-		$api_provider     = get_option( 'ai_reach_api_provider', 'openrouter' );
-		$openrouter_key   = get_option( 'ai_reach_openrouter_key', '' );
-		$openai_key       = get_option( 'ai_reach_openai_key', '' );
-		$gemini_key       = get_option( 'ai_reach_gemini_key', '' );
-		$perplexity_key   = get_option( 'ai_reach_perplexity_key', '' );
-		$anthropic_key    = get_option( 'ai_reach_anthropic_key', '' );
-		$openrouter_model = get_option( 'ai_reach_openrouter_model', 'default' );
-		$openai_model     = get_option( 'ai_reach_openai_model', 'gpt-4o-mini' );
-		$gemini_model     = get_option( 'ai_reach_gemini_model', 'gemini-2.5-flash' );
-		$perplexity_model = get_option( 'ai_reach_perplexity_model', 'sonar' );
-		$anthropic_model  = get_option( 'ai_reach_anthropic_model', 'claude-3-5-sonnet-20241022' );
+		$api_provider     = get_option( 'nectar_geo_api_provider', 'openrouter' );
+		$openrouter_key   = get_option( 'nectar_geo_openrouter_key', '' );
+		$openai_key       = get_option( 'nectar_geo_openai_key', '' );
+		$gemini_key       = get_option( 'nectar_geo_gemini_key', '' );
+		$perplexity_key   = get_option( 'nectar_geo_perplexity_key', '' );
+		$anthropic_key    = get_option( 'nectar_geo_anthropic_key', '' );
+		$openrouter_model = get_option( 'nectar_geo_openrouter_model', 'default' );
+		$openai_model     = get_option( 'nectar_geo_openai_model', 'gpt-4o-mini' );
+		$gemini_model     = get_option( 'nectar_geo_gemini_model', 'gemini-2.5-flash' );
+		$perplexity_model = get_option( 'nectar_geo_perplexity_model', 'sonar' );
+		$anthropic_model  = get_option( 'nectar_geo_anthropic_model', 'claude-3-5-sonnet-20241022' );
 
 		// Derive the active key for scan-readiness check.
-		$active_key_option = 'ai_reach_' . sanitize_key( $api_provider ) . '_key';
+		$active_key_option = 'nectar_geo_' . sanitize_key( $api_provider ) . '_key';
 		$api_key           = get_option( $active_key_option, '' );
 
-		$scan_results = get_option( 'ai_reach_scan_results', array() );
-		$checklist    = get_option( 'ai_reach_checklist_results', array() );
-		$last_scan    = get_option( 'ai_reach_last_scan_time', '' );
+		$scan_results = get_option( 'nectar_geo_scan_results', array() );
+		$checklist    = get_option( 'nectar_geo_checklist_results', array() );
+		$last_scan    = get_option( 'nectar_geo_last_scan_time', '' );
 
 		// Calculate Mentions count.
 		$mentions_count = 0;
@@ -572,18 +573,18 @@ class AI_Reach_Admin {
 		$robots_status = $this->check_robots_txt();
 		?>
 
-		<div id="ai-reach-dashboard" class="wrap">
+		<div id="nectar-geo-dashboard" class="wrap">
 			<header class="dashboard-header">
 				<div class="header-main">
-					<h1 class="wp-heading-inline"><span class="dashicons dashicons-rss"></span> <?php esc_html_e( 'AI Reach', 'ai-reach-geotracker' ); ?> <span class="badge"><?php esc_html_e( 'GEO Tracker', 'ai-reach-geotracker' ); ?></span></h1>
-					<p class="tagline"><?php esc_html_e( 'Generative Engine Optimization & AI Visibility command center.', 'ai-reach-geotracker' ); ?></p>
+					<h1 class="wp-heading-inline"><span class="dashicons dashicons-rss"></span> <?php esc_html_e( 'Nectar GEO', 'nectar-geo' ); ?> <span class="badge"><?php esc_html_e( 'GEO Tracker', 'nectar-geo' ); ?></span></h1>
+					<p class="tagline"><?php esc_html_e( 'Generative Engine Optimization & AI Visibility command center.', 'nectar-geo' ); ?></p>
 				</div>
 				<?php if ( ! empty( $last_scan ) ) : ?>
 					<div class="last-scan-time">
 						<span class="dashicons dashicons-clock"></span>
 						<?php
 						/* translators: %s: date and time of the last scan */
-						printf( esc_html__( 'Last Scan: %s', 'ai-reach-geotracker' ), esc_html( $last_scan ) );
+						printf( esc_html__( 'Last Scan: %s', 'nectar-geo' ), esc_html( $last_scan ) );
 						?>
 					</div>
 				<?php endif; ?>
@@ -595,17 +596,17 @@ class AI_Reach_Admin {
 					<span class="dashicons dashicons-warning"></span>
 				</div>
 				<div class="alert-content">
-					<h3><?php esc_html_e( 'AI Blockers Detected in robots.txt!', 'ai-reach-geotracker' ); ?></h3>
+					<h3><?php esc_html_e( 'AI Blockers Detected in robots.txt!', 'nectar-geo' ); ?></h3>
 					<p id="robots-warning-text"><?php echo esc_html( $robots_status['reason'] ); ?></p>
-					<button id="autofix-robots-btn" class="button button-primary action-btn-red"><?php esc_html_e( 'Auto-Fix Blocker', 'ai-reach-geotracker' ); ?></button>
+					<button id="autofix-robots-btn" class="button button-primary action-btn-red"><?php esc_html_e( 'Auto-Fix Blocker', 'nectar-geo' ); ?></button>
 				</div>
 			</div>
 
 			<!-- Tab Navigation -->
 			<nav class="nav-tab-wrapper custom-tabs">
-				<a href="#tab-command-center" class="nav-tab nav-tab-active" data-tab="tab-command-center"><span class="dashicons dashicons-dashboard"></span> <?php esc_html_e( 'Command Center', 'ai-reach-geotracker' ); ?></a>
-				<a href="#tab-checklist" class="nav-tab" data-tab="tab-checklist"><span class="dashicons dashicons-editor-ul"></span> <?php esc_html_e( '9-Point Deep Dive', 'ai-reach-geotracker' ); ?></a>
-				<a href="#tab-settings" class="nav-tab" data-tab="tab-settings"><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'Configuration', 'ai-reach-geotracker' ); ?></a>
+				<a href="#tab-command-center" class="nav-tab nav-tab-active" data-tab="tab-command-center"><span class="dashicons dashicons-dashboard"></span> <?php esc_html_e( 'Command Center', 'nectar-geo' ); ?></a>
+				<a href="#tab-checklist" class="nav-tab" data-tab="tab-checklist"><span class="dashicons dashicons-editor-ul"></span> <?php esc_html_e( '9-Point Deep Dive', 'nectar-geo' ); ?></a>
+				<a href="#tab-settings" class="nav-tab" data-tab="tab-settings"><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'Configuration', 'nectar-geo' ); ?></a>
 			</nav>
 
 			<main class="dashboard-content">
@@ -618,7 +619,7 @@ class AI_Reach_Admin {
 								<span class="dashicons dashicons-info"></span>
 								<?php
 								echo wp_kses(
-									__( 'Please fill in settings in the <a href="#" class="go-to-settings-tab">Configuration Tab</a> before running a scan.', 'ai-reach-geotracker' ),
+									__( 'Please fill in settings in the <a href="#" class="go-to-settings-tab">Configuration Tab</a> before running a scan.', 'nectar-geo' ),
 									array(
 										'a' => array(
 											'href'  => array(),
@@ -628,9 +629,9 @@ class AI_Reach_Admin {
 								);
 								?>
 							</div>
-							<button id="run-ai-scan-btn" class="btn-run-scan disabled-btn" disabled><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'Run AI Scan', 'ai-reach-geotracker' ); ?></button>
+							<button id="run-ai-scan-btn" class="btn-run-scan disabled-btn" disabled><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'Run AI Scan', 'nectar-geo' ); ?></button>
 						<?php else : ?>
-							<button id="run-ai-scan-btn" class="btn-run-scan"><span class="dashicons dashicons-performance"></span> <?php esc_html_e( 'Run AI Scan', 'ai-reach-geotracker' ); ?></button>
+							<button id="run-ai-scan-btn" class="btn-run-scan"><span class="dashicons dashicons-performance"></span> <?php esc_html_e( 'Run AI Scan', 'nectar-geo' ); ?></button>
 						<?php endif; ?>
 					</div>
 
@@ -638,7 +639,7 @@ class AI_Reach_Admin {
 						<!-- Score card -->
 						<div class="stat-card card-radial">
 							<div class="card-inner">
-								<h3><?php esc_html_e( 'Overall AI Score', 'ai-reach-geotracker' ); ?></h3>
+								<h3><?php esc_html_e( 'Overall AI Score', 'nectar-geo' ); ?></h3>
 								<div class="circle-container">
 									<svg class="progress-ring" width="120" height="120">
 										<circle class="progress-ring__circle-bg" stroke="#1e293b" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" />
@@ -646,45 +647,45 @@ class AI_Reach_Admin {
 									</svg>
 									<div class="radial-score" id="overall-score-text"><?php echo esc_html( $overall_score ); ?>%</div>
 								</div>
-								<p class="stat-meta"><?php esc_html_e( 'Calculated across the 9 optimization pillars.', 'ai-reach-geotracker' ); ?></p>
+								<p class="stat-meta"><?php esc_html_e( 'Calculated across the 9 optimization pillars.', 'nectar-geo' ); ?></p>
 							</div>
 						</div>
 
 						<!-- Mentions card -->
 						<div class="stat-card card-mentions">
 							<div class="card-inner">
-								<h3><?php esc_html_e( 'Total Mentions', 'ai-reach-geotracker' ); ?></h3>
+								<h3><?php esc_html_e( 'Total Mentions', 'nectar-geo' ); ?></h3>
 								<div class="mentions-display">
 									<span class="mention-ratio" id="total-mentions-ratio"><?php echo esc_html( $mentions_count ); ?></span><span class="mention-total">/5</span>
 								</div>
-								<p class="stat-meta"><?php esc_html_e( 'Active AI Engines referencing your brand.', 'ai-reach-geotracker' ); ?></p>
+								<p class="stat-meta"><?php esc_html_e( 'Active AI Engines referencing your brand.', 'nectar-geo' ); ?></p>
 							</div>
 						</div>
 					</div>
 
 					<!-- Engine Matrix -->
-					<h2 class="section-title"><?php esc_html_e( 'AI Search Engine Visibility Matrix', 'ai-reach-geotracker' ); ?></h2>
+					<h2 class="section-title"><?php esc_html_e( 'AI Search Engine Visibility Matrix', 'nectar-geo' ); ?></h2>
 					<div class="engines-grid">
 						<?php
 						$engines_config = array(
 							'openai'     => array(
-								'name' => __( 'OpenAI SearchGPT', 'ai-reach-geotracker' ),
+								'name' => __( 'OpenAI SearchGPT', 'nectar-geo' ),
 								'sub'  => 'gpt-4o',
 							),
 							'gemini'     => array(
-								'name' => __( 'Google Gemini', 'ai-reach-geotracker' ),
+								'name' => __( 'Google Gemini', 'nectar-geo' ),
 								'sub'  => 'gemini-2.5-pro',
 							),
 							'perplexity' => array(
-								'name' => __( 'Perplexity AI', 'ai-reach-geotracker' ),
+								'name' => __( 'Perplexity AI', 'nectar-geo' ),
 								'sub'  => 'sonar-online',
 							),
 							'claude'     => array(
-								'name' => __( 'Anthropic Claude', 'ai-reach-geotracker' ),
+								'name' => __( 'Anthropic Claude', 'nectar-geo' ),
 								'sub'  => 'claude-3.5-sonnet',
 							),
 							'siri'       => array(
-								'name' => __( 'Apple Intelligence', 'ai-reach-geotracker' ),
+								'name' => __( 'Apple Intelligence', 'nectar-geo' ),
 								'sub'  => 'siri-llm-layer',
 							),
 						);
@@ -708,12 +709,12 @@ class AI_Reach_Admin {
 									<div class="engine-status-tag">
 										<?php if ( $has_data ) : ?>
 											<?php if ( $mentioned ) : ?>
-												<span class="tag tag-green"><span class="pulse-dot green-dot"></span> <?php esc_html_e( '✅ Mentioned', 'ai-reach-geotracker' ); ?></span>
+												<span class="tag tag-green"><span class="pulse-dot green-dot"></span> <?php esc_html_e( '✅ Mentioned', 'nectar-geo' ); ?></span>
 											<?php else : ?>
-												<span class="tag tag-red"><span class="pulse-dot red-dot"></span> <?php esc_html_e( '❌ Missing', 'ai-reach-geotracker' ); ?></span>
+												<span class="tag tag-red"><span class="pulse-dot red-dot"></span> <?php esc_html_e( '❌ Missing', 'nectar-geo' ); ?></span>
 											<?php endif; ?>
 										<?php else : ?>
-											<span class="tag tag-gray"><?php esc_html_e( '⚪ Not Scanned', 'ai-reach-geotracker' ); ?></span>
+											<span class="tag tag-gray"><?php esc_html_e( '⚪ Not Scanned', 'nectar-geo' ); ?></span>
 										<?php endif; ?>
 									</div>
 								</div>
@@ -723,13 +724,13 @@ class AI_Reach_Admin {
 										if ( $has_data ) {
 											echo esc_html( wp_trim_words( $transcript, 18, '...' ) );
 										} else {
-											esc_html_e( 'No scan data available. Trigger a scan to analyze visibility.', 'ai-reach-geotracker' );
+											esc_html_e( 'No scan data available. Trigger a scan to analyze visibility.', 'nectar-geo' );
 										}
 										?>
 									</p>
 								</div>
 								<div class="engine-card-footer">
-									<button class="view-transcript-btn" <?php echo ! $has_data ? 'disabled' : ''; ?>><?php esc_html_e( 'View Full Transcript', 'ai-reach-geotracker' ); ?> <span class="dashicons dashicons-external"></span></button>
+									<button class="view-transcript-btn" <?php echo ! $has_data ? 'disabled' : ''; ?>><?php esc_html_e( 'View Full Transcript', 'nectar-geo' ); ?> <span class="dashicons dashicons-external"></span></button>
 								</div>
 								<!-- Hidden full transcript container -->
 								<div class="hidden-transcript" style="display:none;"><?php echo esc_textarea( $transcript ); ?></div>
@@ -740,20 +741,20 @@ class AI_Reach_Admin {
 
 				<!-- SCREEN 2: 9-POINT DEEP DIVE -->
 				<section id="tab-checklist" class="tab-pane">
-					<h2 class="section-title"><?php esc_html_e( 'GEO Optimization pillars (9-Point Check)', 'ai-reach-geotracker' ); ?></h2>
-					<p class="section-desc"><?php esc_html_e( 'Review recommendations categorized under technical, content, and authority vectors.', 'ai-reach-geotracker' ); ?></p>
+					<h2 class="section-title"><?php esc_html_e( 'GEO Optimization pillars (9-Point Check)', 'nectar-geo' ); ?></h2>
+					<p class="section-desc"><?php esc_html_e( 'Review recommendations categorized under technical, content, and authority vectors.', 'nectar-geo' ); ?></p>
 
 					<?php if ( empty( $checklist ) ) : ?>
 						<div class="empty-state-notice">
 							<span class="dashicons dashicons-clipboard"></span>
-							<p><?php esc_html_e( 'No checklist analysis exists yet. Please run an AI Scan from the Command Center to populate this tab.', 'ai-reach-geotracker' ); ?></p>
+							<p><?php esc_html_e( 'No checklist analysis exists yet. Please run an AI Scan from the Command Center to populate this tab.', 'nectar-geo' ); ?></p>
 						</div>
 					<?php else : ?>
 						<div class="checklist-categories">
 
 							<!-- CATEGORY A: TECHNICAL FOUNDATION -->
 							<div class="category-block">
-								<h3 class="cat-title"><span class="dashicons dashicons-admin-tools"></span> <?php esc_html_e( 'Technical Foundation', 'ai-reach-geotracker' ); ?></h3>
+								<h3 class="cat-title"><span class="dashicons dashicons-admin-tools"></span> <?php esc_html_e( 'Technical Foundation', 'nectar-geo' ); ?></h3>
 								<div class="accordion-list">
 									<?php $this->render_checklist_item( $checklist, 'schema_alignment' ); ?>
 									<?php $this->render_checklist_item( $checklist, 'freshness' ); ?>
@@ -762,7 +763,7 @@ class AI_Reach_Admin {
 
 							<!-- CATEGORY B: CONTENT OPTIMIZATION -->
 							<div class="category-block">
-								<h3 class="cat-title"><span class="dashicons dashicons-editor-alignleft"></span> <?php esc_html_e( 'Content Optimization', 'ai-reach-geotracker' ); ?></h3>
+								<h3 class="cat-title"><span class="dashicons dashicons-editor-alignleft"></span> <?php esc_html_e( 'Content Optimization', 'nectar-geo' ); ?></h3>
 								<div class="accordion-list">
 									<?php $this->render_checklist_item( $checklist, 'answerability' ); ?>
 									<?php $this->render_checklist_item( $checklist, 'conversational' ); ?>
@@ -772,7 +773,7 @@ class AI_Reach_Admin {
 
 							<!-- CATEGORY C: TRUST & CITATIONS -->
 							<div class="category-block">
-								<h3 class="cat-title"><span class="dashicons dashicons-awards"></span> <?php esc_html_e( 'Off-Page Trust & Authority', 'ai-reach-geotracker' ); ?></h3>
+								<h3 class="cat-title"><span class="dashicons dashicons-awards"></span> <?php esc_html_e( 'Off-Page Trust & Authority', 'nectar-geo' ); ?></h3>
 								<div class="accordion-list">
 									<?php $this->render_checklist_item( $checklist, 'brand_citation' ); ?>
 									<?php $this->render_checklist_item( $checklist, 'authority_sources' ); ?>
@@ -791,36 +792,36 @@ class AI_Reach_Admin {
 
 						<!-- Form Configuration -->
 						<div class="settings-form-container">
-							<h2 class="section-title"><?php esc_html_e( 'General Settings', 'ai-reach-geotracker' ); ?></h2>
+							<h2 class="section-title"><?php esc_html_e( 'General Settings', 'nectar-geo' ); ?></h2>
 							<form method="post" action="">
-								<?php wp_nonce_field( 'ai_reach_settings_nonce' ); ?>
+								<?php wp_nonce_field( 'nectar_geo_settings_nonce' ); ?>
 
 								<table class="form-table custom-form-table">
 									<tr>
-										<th scope="row"><label for="brand_name"><?php esc_html_e( 'Brand/Entity Name', 'ai-reach-geotracker' ); ?></label></th>
+										<th scope="row"><label for="brand_name"><?php esc_html_e( 'Brand/Entity Name', 'nectar-geo' ); ?></label></th>
 										<td>
 											<input name="brand_name" type="text" id="brand_name" value="<?php echo esc_attr( $brand_name ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" required />
-											<p class="description"><?php esc_html_e( 'The specific brand name or entity phrase AI engines should search for (e.g. Acme Corp).', 'ai-reach-geotracker' ); ?></p>
+											<p class="description"><?php esc_html_e( 'The specific brand name or entity phrase AI engines should search for (e.g. Acme Corp).', 'nectar-geo' ); ?></p>
 										</td>
 									</tr>
 									<tr>
-										<th scope="row"><label for="keywords"><?php esc_html_e( 'Target Keywords', 'ai-reach-geotracker' ); ?></label></th>
+										<th scope="row"><label for="keywords"><?php esc_html_e( 'Target Keywords', 'nectar-geo' ); ?></label></th>
 										<td>
 											<input name="keywords" type="text" id="keywords" value="<?php echo esc_attr( $keywords ); ?>" class="regular-text" placeholder="best CRM software, enterprise solutions" required />
-											<p class="description"><?php esc_html_e( 'A comma-separated list of keywords that will trigger AI engine searches.', 'ai-reach-geotracker' ); ?></p>
+											<p class="description"><?php esc_html_e( 'A comma-separated list of keywords that will trigger AI engine searches.', 'nectar-geo' ); ?></p>
 										</td>
 									</tr>
 									<tr>
-										<th scope="row"><label for="api_provider"><?php esc_html_e( 'API Provider', 'ai-reach-geotracker' ); ?></label></th>
+										<th scope="row"><label for="api_provider"><?php esc_html_e( 'API Provider', 'nectar-geo' ); ?></label></th>
 										<td>
 											<select name="api_provider" id="api_provider" class="regular-text">
-												<option value="openrouter" <?php selected( $api_provider, 'openrouter' ); ?>><?php esc_html_e( 'OpenRouter', 'ai-reach-geotracker' ); ?></option>
-												<option value="openai" <?php selected( $api_provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI', 'ai-reach-geotracker' ); ?></option>
-												<option value="gemini" <?php selected( $api_provider, 'gemini' ); ?>><?php esc_html_e( 'Gemini', 'ai-reach-geotracker' ); ?></option>
-												<option value="perplexity" <?php selected( $api_provider, 'perplexity' ); ?>><?php esc_html_e( 'Perplexity', 'ai-reach-geotracker' ); ?></option>
-												<option value="anthropic" <?php selected( $api_provider, 'anthropic' ); ?>><?php esc_html_e( 'Anthropic', 'ai-reach-geotracker' ); ?></option>
+												<option value="openrouter" <?php selected( $api_provider, 'openrouter' ); ?>><?php esc_html_e( 'OpenRouter', 'nectar-geo' ); ?></option>
+												<option value="openai" <?php selected( $api_provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI', 'nectar-geo' ); ?></option>
+												<option value="gemini" <?php selected( $api_provider, 'gemini' ); ?>><?php esc_html_e( 'Gemini', 'nectar-geo' ); ?></option>
+												<option value="perplexity" <?php selected( $api_provider, 'perplexity' ); ?>><?php esc_html_e( 'Perplexity', 'nectar-geo' ); ?></option>
+												<option value="anthropic" <?php selected( $api_provider, 'anthropic' ); ?>><?php esc_html_e( 'Anthropic', 'nectar-geo' ); ?></option>
 											</select>
-											<p class="description"><?php esc_html_e( 'Select which AI provider will power the scans. Only the active provider key is required.', 'ai-reach-geotracker' ); ?></p>
+											<p class="description"><?php esc_html_e( 'Select which AI provider will power the scans. Only the active provider key is required.', 'nectar-geo' ); ?></p>
 										</td>
 									</tr>
 
@@ -828,45 +829,45 @@ class AI_Reach_Admin {
 									// Build provider config for key + model rows.
 									$providers_ui = array(
 										'openrouter' => array(
-											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
+											'label'       => __( 'API Key', 'nectar-geo' ),
 											'placeholder' => 'sk-or-v1-...',
 											'key_val'     => $openrouter_key,
 											'model_val'   => $openrouter_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
+											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
 										),
 										'openai'     => array(
-											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
+											'label'       => __( 'API Key', 'nectar-geo' ),
 											'placeholder' => 'sk-...',
 											'key_val'     => $openai_key,
 											'model_val'   => $openai_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
+											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
 										),
 										'gemini'     => array(
-											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
+											'label'       => __( 'API Key', 'nectar-geo' ),
 											'placeholder' => 'AIza...',
 											'key_val'     => $gemini_key,
 											'model_val'   => $gemini_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
+											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
 										),
 										'perplexity' => array(
-											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
+											'label'       => __( 'API Key', 'nectar-geo' ),
 											'placeholder' => 'pplx-...',
 											'key_val'     => $perplexity_key,
 											'model_val'   => $perplexity_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
+											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
 										),
 										'anthropic'  => array(
-											'label'       => __( 'API Key', 'ai-reach-geotracker' ),
+											'label'       => __( 'API Key', 'nectar-geo' ),
 											'placeholder' => 'sk-ant-...',
 											'key_val'     => $anthropic_key,
 											'model_val'   => $anthropic_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'ai-reach-geotracker' ),
+											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
 										),
 									);
 									foreach ( $providers_ui as $p_key => $p_cfg ) :
 										$is_active   = ( $api_provider === $p_key );
 										$row_style   = $is_active ? '' : 'display:none;';
-										$models      = AI_Reach_Scanner::get_provider_models( $p_key );
+										$models      = Nectar_GEO_Scanner::get_provider_models( $p_key );
 										$field_key   = esc_attr( $p_key ) . '_key';
 										$field_model = esc_attr( $p_key ) . '_model';
 										?>
@@ -875,7 +876,7 @@ class AI_Reach_Admin {
 											<td>
 												<div class="api-input-row">
 													<input name="<?php echo esc_attr( $field_key ); ?>" type="password" id="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $p_cfg['key_val'] ); ?>" class="regular-text provider-api-key" data-provider="<?php echo esc_attr( $p_key ); ?>" placeholder="<?php echo esc_attr( $p_cfg['placeholder'] ); ?>" />
-													<button type="button" class="button button-secondary test-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'ai-reach-geotracker' ); ?></button>
+													<button type="button" class="button button-secondary test-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'nectar-geo' ); ?></button>
 												</div>
 												<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>"></span>
 												<p class="description">
@@ -895,14 +896,14 @@ class AI_Reach_Admin {
 											</td>
 										</tr>
 										<tr class="provider-model-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
-											<th scope="row"><label for="<?php echo esc_attr( $field_model ); ?>"><?php esc_html_e( 'Model', 'ai-reach-geotracker' ); ?></label></th>
+											<th scope="row"><label for="<?php echo esc_attr( $field_model ); ?>"><?php esc_html_e( 'Model', 'nectar-geo' ); ?></label></th>
 											<td>
 												<select name="<?php echo esc_attr( $field_model ); ?>" id="<?php echo esc_attr( $field_model ); ?>" class="regular-text">
 													<?php foreach ( $models as $m_val => $m_label ) : ?>
 														<option value="<?php echo esc_attr( $m_val ); ?>" <?php selected( $p_cfg['model_val'], $m_val ); ?>><?php echo esc_html( $m_label ); ?></option>
 													<?php endforeach; ?>
 												</select>
-												<p class="description"><?php esc_html_e( 'Select the AI model to use for all engine scans under this provider.', 'ai-reach-geotracker' ); ?></p>
+												<p class="description"><?php esc_html_e( 'Select the AI model to use for all engine scans under this provider.', 'nectar-geo' ); ?></p>
 											</td>
 										</tr>
 									<?php endforeach; ?>
@@ -910,21 +911,21 @@ class AI_Reach_Admin {
 										<td colspan="2"><span id="test-conn-feedback"></span></td>
 									</tr>
 									<tr>
-										<th scope="row"><?php esc_html_e( 'Automated Scan Schedule', 'ai-reach-geotracker' ); ?></th>
+										<th scope="row"><?php esc_html_e( 'Automated Scan Schedule', 'nectar-geo' ); ?></th>
 										<td>
 											<fieldset>
 												<label for="daily_scan">
 													<input name="daily_scan" type="checkbox" id="daily_scan" value="1" <?php checked( $daily_scan, '1' ); ?> />
-													<?php esc_html_e( 'Enable Daily Auto-Scan via WP-Cron', 'ai-reach-geotracker' ); ?>
+													<?php esc_html_e( 'Enable Daily Auto-Scan via WP-Cron', 'nectar-geo' ); ?>
 												</label>
-												<p class="description"><?php esc_html_e( 'Automatically run scans every 24 hours in the background using native WordPress scheduling.', 'ai-reach-geotracker' ); ?></p>
+												<p class="description"><?php esc_html_e( 'Automatically run scans every 24 hours in the background using native WordPress scheduling.', 'nectar-geo' ); ?></p>
 											</fieldset>
 										</td>
 									</tr>
 								</table>
 
 								<div class="submit-button-row">
-									<input type="submit" name="ai_reach_save_settings" id="submit" class="button button-primary action-btn-purple" value="<?php esc_html_e( 'Save Settings', 'ai-reach-geotracker' ); ?>" />
+									<input type="submit" name="nectar_geo_save_settings" id="submit" class="button button-primary action-btn-purple" value="<?php esc_html_e( 'Save Settings', 'nectar-geo' ); ?>" />
 								</div>
 							</form>
 						</div>
@@ -933,10 +934,10 @@ class AI_Reach_Admin {
 						<div class="safety-panel-container">
 							<div class="safety-card">
 								<div class="safety-card-header">
-									<h3><span class="dashicons dashicons-shield"></span> <?php esc_html_e( 'AI Crawler Safelist', 'ai-reach-geotracker' ); ?></h3>
+									<h3><span class="dashicons dashicons-shield"></span> <?php esc_html_e( 'AI Crawler Safelist', 'nectar-geo' ); ?></h3>
 								</div>
 								<div class="safety-card-body">
-									<p><?php esc_html_e( 'To optimize your site for 2026 generative models, create an ai.txt file. This file sits alongside robots.txt in your site root and explicitly permits and instructs AI engines on how to crawl and read content indices.', 'ai-reach-geotracker' ); ?></p>
+									<p><?php esc_html_e( 'To optimize your site for 2026 generative models, create an ai.txt file. This file sits alongside robots.txt in your site root and explicitly permits and instructs AI engines on how to crawl and read content indices.', 'nectar-geo' ); ?></p>
 
 									<div class="ai-txt-preview">
 										<pre><code># ai.txt sample
@@ -948,7 +949,7 @@ User-agent: PerplexityBot
 Allow: /</code></pre>
 									</div>
 
-									<button id="generate-aitxt-btn" class="button button-primary action-btn-purple-outline"><?php esc_html_e( 'Generate ai.txt File', 'ai-reach-geotracker' ); ?></button>
+									<button id="generate-aitxt-btn" class="button button-primary action-btn-purple-outline"><?php esc_html_e( 'Generate ai.txt File', 'nectar-geo' ); ?></button>
 									<span id="aitxt-feedback" class="aitxt-feedback"></span>
 								</div>
 							</div>
@@ -962,7 +963,7 @@ Allow: /</code></pre>
 			<div id="transcript-modal" class="modal-overlay">
 				<div class="modal-window">
 					<div class="modal-header">
-						<h3 id="modal-title"><?php esc_html_e( 'Engine Scan Transcript', 'ai-reach-geotracker' ); ?></h3>
+						<h3 id="modal-title"><?php esc_html_e( 'Engine Scan Transcript', 'nectar-geo' ); ?></h3>
 						<button class="modal-close-btn">&times;</button>
 					</div>
 					<div class="modal-body">
@@ -972,7 +973,7 @@ Allow: /</code></pre>
 						<textarea id="modal-transcript-content" readonly></textarea>
 					</div>
 					<div class="modal-footer">
-						<button class="button button-secondary modal-close-btn-bottom"><?php esc_html_e( 'Close', 'ai-reach-geotracker' ); ?></button>
+						<button class="button button-secondary modal-close-btn-bottom"><?php esc_html_e( 'Close', 'nectar-geo' ); ?></button>
 					</div>
 				</div>
 			</div>
@@ -1006,21 +1007,21 @@ Allow: /</code></pre>
 				</div>
 				<div class="summary-right">
 					<?php if ( $is_opt ) : ?>
-						<span class="badge badge-green"><?php esc_html_e( 'Optimized', 'ai-reach-geotracker' ); ?> (+10)</span>
+						<span class="badge badge-green"><?php esc_html_e( 'Optimized', 'nectar-geo' ); ?> (+10)</span>
 					<?php else : ?>
-						<span class="badge badge-red"><?php esc_html_e( 'Action Required', 'ai-reach-geotracker' ); ?></span>
+						<span class="badge badge-red"><?php esc_html_e( 'Action Required', 'nectar-geo' ); ?></span>
 					<?php endif; ?>
 				</div>
 			</summary>
 			<div class="checklist-details-body">
-				<p class="checklist-desc"><strong><?php esc_html_e( 'Current Status:', 'ai-reach-geotracker' ); ?></strong> <?php echo esc_html( $item['description'] ); ?></p>
-				<p class="checklist-recom"><strong><?php esc_html_e( 'Action Step:', 'ai-reach-geotracker' ); ?></strong> <?php echo esc_html( $item['recommendation'] ); ?></p>
+				<p class="checklist-desc"><strong><?php esc_html_e( 'Current Status:', 'nectar-geo' ); ?></strong> <?php echo esc_html( $item['description'] ); ?></p>
+				<p class="checklist-recom"><strong><?php esc_html_e( 'Action Step:', 'nectar-geo' ); ?></strong> <?php echo esc_html( $item['recommendation'] ); ?></p>
 
 				<?php if ( ! empty( $item['snippet'] ) ) : ?>
 					<div class="code-snippet-box">
 						<div class="snippet-header">
-							<span><?php esc_html_e( 'Recommended Implementation:', 'ai-reach-geotracker' ); ?></span>
-							<button class="copy-snippet-btn" data-clipboard-target="#snippet-<?php echo esc_attr( $key ); ?>"><?php esc_html_e( 'Copy Code', 'ai-reach-geotracker' ); ?></button>
+							<span><?php esc_html_e( 'Recommended Implementation:', 'nectar-geo' ); ?></span>
+							<button class="copy-snippet-btn" data-clipboard-target="#snippet-<?php echo esc_attr( $key ); ?>"><?php esc_html_e( 'Copy Code', 'nectar-geo' ); ?></button>
 						</div>
 						<pre><code id="snippet-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $item['snippet'] ); ?></code></pre>
 					</div>

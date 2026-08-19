@@ -1,5 +1,5 @@
 /**
- * AI Reach (GEO Tracker) - Admin Dashboard Scripts
+ * Nectar GEO - Admin Dashboard Scripts
  * Handles AJAX requests, UI state changes, engine scans, and modals.
  */
 
@@ -15,13 +15,13 @@
 
 		// ---- Inline notice helper (replaces alert()) ----
 		function showNotice( msg, type ) {
-			var $notice = jQuery('<div class="notice notice-' + ( type || 'error' ) + ' is-dismissible ai-reach-inline-notice"><p>' + msg + '</p></div>');
+			var $notice = jQuery('<div class="notice notice-' + ( type || 'error' ) + ' is-dismissible nectar-geo-inline-notice"><p>' + msg + '</p></div>');
 			jQuery('.wrap h1').first().after( $notice);
 			setTimeout(function() { $notice.fadeOut(400, function() { jQuery(this).remove(); }); }, 5000);
 		}
 
 		// Elements Cache
-		var $dashboard = jQuery('#ai-reach-dashboard');
+		var $dashboard = jQuery('#nectar-geo-dashboard');
 		if (!$dashboard.length) return;
 
 		var $tabs = $dashboard.find('.custom-tabs .nav-tab');
@@ -36,8 +36,8 @@
 		var $modalEngineBadge = jQuery('#modal-engine-badge');
 		var $modalContent = jQuery('#modal-transcript-content');
 		
-		var engines = aiReachData.engines; // ['openai', 'gemini', 'perplexity', 'claude', 'siri']
-		var i18n = aiReachData.i18n;
+		var engines = nectarGeoData.engines; // ['openai', 'gemini', 'perplexity', 'claude', 'siri']
+		var i18n = nectarGeoData.i18n;
 		var scanResults = {};
 
 		/* ========================================================
@@ -106,12 +106,12 @@
 			$btn.prop('disabled', true).text(i18n.testing);
 
 			jQuery.ajax({
-				url: aiReachData.ajax_url,
+				url: nectarGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'ai_reach_test_connection',
-					nonce: aiReachData.nonce,
+					action: 'nectar_geo_test_connection',
+					nonce: nectarGeoData.nonce,
 					api_key: apiKey,
 					provider: provider,
 					model: model || ''
@@ -143,12 +143,12 @@
 			$autofixRobotsBtn.prop('disabled', true).text(i18n.fixing);
 
 			jQuery.ajax({
-				url: aiReachData.ajax_url,
+				url: nectarGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'ai_reach_autofix_robots',
-					nonce: aiReachData.nonce
+					action: 'nectar_geo_autofix_robots',
+					nonce: nectarGeoData.nonce
 				},
 				success: function(response) {
 					if (response.success) {
@@ -177,12 +177,12 @@
 			$generateAitxtBtn.prop('disabled', true).text(i18n.generating);
 
 			jQuery.ajax({
-				url: aiReachData.ajax_url,
+				url: nectarGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'ai_reach_generate_aitxt',
-					nonce: aiReachData.nonce
+					action: 'nectar_geo_generate_aitxt',
+					nonce: nectarGeoData.nonce
 				},
 				success: function(response) {
 					if (response.success) {
@@ -221,7 +221,7 @@
 					.attr('data-has-data', 'no');
 				
 				card.find('.engine-status-tag').html('<span class="tag tag-gray"><span class="pulse-dot"></span> ' + i18n.scanning + '</span>');
-				card.find('.transcript-preview').text(formatString(i18n.queryingModelVia, aiReachData.active_provider_label));
+				card.find('.transcript-preview').text(formatString(i18n.queryingModelVia, nectarGeoData.active_provider_label));
 				card.find('.view-transcript-btn').prop('disabled', true);
 				card.find('.hidden-transcript').text('');
 			});
@@ -241,12 +241,12 @@
 			var card = jQuery('.engine-card[data-engine="' + engineId + '"]');
 
 			jQuery.ajax({
-				url: aiReachData.ajax_url,
+				url: nectarGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'ai_reach_run_engine_scan',
-					nonce: aiReachData.nonce,
+					action: 'nectar_geo_run_engine_scan',
+					nonce: nectarGeoData.nonce,
 					engine_id: engineId
 				},
 				success: function(response) {
@@ -312,12 +312,12 @@
 			$runScanBtn.html('<span class="dashicons dashicons-update spin"></span> ' + i18n.rebuildingScore);
 
 			jQuery.ajax({
-				url: aiReachData.ajax_url,
+				url: nectarGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'ai_reach_save_scan_results',
-					nonce: aiReachData.nonce,
+					action: 'nectar_geo_save_scan_results',
+					nonce: nectarGeoData.nonce,
 					results: scanResults
 				},
 				success: function(response) {

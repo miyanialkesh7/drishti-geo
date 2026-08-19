@@ -1,10 +1,10 @@
 <?php
 /**
- * Class AI_Reach_Scanner
+ * Class Nectar_GEO_Scanner
  * Handles multi-provider API interactions (OpenRouter, OpenAI, Gemini, Perplexity, Anthropic),
  * scanning logic, and 9-pillar GEO calculation.
  *
- * @package AI_Reach_GEO_Tracker
+ * @package Nectar_GEO
  */
 
 declare(strict_types=1);
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Handles multi-provider API interactions, scanning logic, and 9-pillar GEO calculation.
  */
-class AI_Reach_Scanner {
+class Nectar_GEO_Scanner {
 
 	/**
 	 * Active API provider key (openrouter|openai|gemini|perplexity|anthropic)
@@ -58,13 +58,13 @@ class AI_Reach_Scanner {
 	 * Constructor — loads active provider, key, and model from DB.
 	 */
 	public function __construct() {
-		$this->provider   = get_option( 'ai_reach_api_provider', 'openrouter' );
-		$key_option       = 'ai_reach_' . sanitize_key( $this->provider ) . '_key';
-		$model_option     = 'ai_reach_' . sanitize_key( $this->provider ) . '_model';
+		$this->provider   = get_option( 'nectar_geo_api_provider', 'openrouter' );
+		$key_option       = 'nectar_geo_' . sanitize_key( $this->provider ) . '_key';
+		$model_option     = 'nectar_geo_' . sanitize_key( $this->provider ) . '_model';
 		$this->api_key    = get_option( $key_option, '' );
 		$this->model      = get_option( $model_option, '' );
-		$this->brand_name = get_option( 'ai_reach_brand_name', '' );
-		$this->keywords   = get_option( 'ai_reach_keywords', '' );
+		$this->brand_name = get_option( 'nectar_geo_brand_name', '' );
+		$this->keywords   = get_option( 'nectar_geo_keywords', '' );
 	}
 
 	/**
@@ -76,33 +76,33 @@ class AI_Reach_Scanner {
 	public static function get_provider_models( string $provider ): array {
 		$map = array(
 			'openrouter' => array(
-				'default'                     => __( 'Default (engine-specific models)', 'ai-reach-geotracker' ),
-				'google/gemini-2.5-flash'     => __( 'Gemini 2.5 Flash', 'ai-reach-geotracker' ),
-				'google/gemini-2.5-pro'       => __( 'Gemini 2.5 Pro', 'ai-reach-geotracker' ),
-				'openai/gpt-4o'               => __( 'GPT-4o', 'ai-reach-geotracker' ),
-				'openai/gpt-4o-mini'          => __( 'GPT-4o Mini', 'ai-reach-geotracker' ),
-				'anthropic/claude-3.5-sonnet' => __( 'Claude 3.5 Sonnet', 'ai-reach-geotracker' ),
-				'perplexity/llama-3.1-sonar-large-128k-online' => __( 'Perplexity Sonar Large', 'ai-reach-geotracker' ),
+				'default'                     => __( 'Default (engine-specific models)', 'nectar-geo' ),
+				'google/gemini-2.5-flash'     => __( 'Gemini 2.5 Flash', 'nectar-geo' ),
+				'google/gemini-2.5-pro'       => __( 'Gemini 2.5 Pro', 'nectar-geo' ),
+				'openai/gpt-4o'               => __( 'GPT-4o', 'nectar-geo' ),
+				'openai/gpt-4o-mini'          => __( 'GPT-4o Mini', 'nectar-geo' ),
+				'anthropic/claude-3.5-sonnet' => __( 'Claude 3.5 Sonnet', 'nectar-geo' ),
+				'perplexity/llama-3.1-sonar-large-128k-online' => __( 'Perplexity Sonar Large', 'nectar-geo' ),
 			),
 			'openai'     => array(
-				'gpt-4o-mini'   => __( 'GPT-4o Mini', 'ai-reach-geotracker' ),
-				'gpt-4o'        => __( 'GPT-4o', 'ai-reach-geotracker' ),
-				'gpt-3.5-turbo' => __( 'GPT-3.5 Turbo', 'ai-reach-geotracker' ),
+				'gpt-4o-mini'   => __( 'GPT-4o Mini', 'nectar-geo' ),
+				'gpt-4o'        => __( 'GPT-4o', 'nectar-geo' ),
+				'gpt-3.5-turbo' => __( 'GPT-3.5 Turbo', 'nectar-geo' ),
 			),
 			'gemini'     => array(
-				'gemini-2.5-flash'      => __( 'Gemini 2.5 Flash', 'ai-reach-geotracker' ),
-				'gemini-2.5-pro'        => __( 'Gemini 2.5 Pro', 'ai-reach-geotracker' ),
-				'gemini-2.0-flash'      => __( 'Gemini 2.0 Flash', 'ai-reach-geotracker' ),
-				'gemini-2.0-flash-lite' => __( 'Gemini 2.0 Flash-Lite', 'ai-reach-geotracker' ),
+				'gemini-2.5-flash'      => __( 'Gemini 2.5 Flash', 'nectar-geo' ),
+				'gemini-2.5-pro'        => __( 'Gemini 2.5 Pro', 'nectar-geo' ),
+				'gemini-2.0-flash'      => __( 'Gemini 2.0 Flash', 'nectar-geo' ),
+				'gemini-2.0-flash-lite' => __( 'Gemini 2.0 Flash-Lite', 'nectar-geo' ),
 			),
 			'perplexity' => array(
-				'sonar'           => __( 'Sonar', 'ai-reach-geotracker' ),
-				'sonar-reasoning' => __( 'Sonar Reasoning', 'ai-reach-geotracker' ),
+				'sonar'           => __( 'Sonar', 'nectar-geo' ),
+				'sonar-reasoning' => __( 'Sonar Reasoning', 'nectar-geo' ),
 			),
 			'anthropic'  => array(
-				'claude-3-5-sonnet-20241022' => __( 'Claude 3.5 Sonnet', 'ai-reach-geotracker' ),
-				'claude-3-5-haiku-20241022'  => __( 'Claude 3.5 Haiku', 'ai-reach-geotracker' ),
-				'claude-3-opus-20240229'     => __( 'Claude 3 Opus', 'ai-reach-geotracker' ),
+				'claude-3-5-sonnet-20241022' => __( 'Claude 3.5 Sonnet', 'nectar-geo' ),
+				'claude-3-5-haiku-20241022'  => __( 'Claude 3.5 Haiku', 'nectar-geo' ),
+				'claude-3-opus-20240229'     => __( 'Claude 3 Opus', 'nectar-geo' ),
 			),
 		);
 		return isset( $map[ $provider ] ) ? $map[ $provider ] : array();
@@ -149,7 +149,7 @@ class AI_Reach_Scanner {
 	 */
 	public function test_connection( string $api_key, string $provider = 'openrouter', string $model = '' ) {
 		if ( empty( $api_key ) ) {
-			return new WP_Error( 'missing_key', __( 'API Key is empty.', 'ai-reach-geotracker' ) );
+			return new WP_Error( 'missing_key', __( 'API Key is empty.', 'nectar-geo' ) );
 		}
 
 		$effective_model = $this->get_test_model( $provider, $model );
@@ -219,7 +219,7 @@ class AI_Reach_Scanner {
 			'Content-Type'  => 'application/json',
 			'Authorization' => 'Bearer ' . trim( $api_key ),
 			'HTTP-Referer'  => esc_url( home_url() ),
-			'X-Title'       => 'AI Reach GEO Tracker',
+			'X-Title'       => 'Nectar GEO',
 		);
 		return $this->do_http_test( $url, $body, $headers );
 	}
@@ -373,18 +373,18 @@ class AI_Reach_Scanner {
 		}
 
 		if ( 401 === $code || 403 === $code ) {
-			return __( 'The API key was rejected as unauthorized. Please verify that the key is complete and has access to the selected provider/model.', 'ai-reach-geotracker' );
+			return __( 'The API key was rejected as unauthorized. Please verify that the key is complete and has access to the selected provider/model.', 'nectar-geo' );
 		}
 
 		if ( 429 === $code ) {
-			return __( 'The provider rejected the request due to quota or rate-limit restrictions. Check your billing/usage or try again shortly.', 'ai-reach-geotracker' );
+			return __( 'The provider rejected the request due to quota or rate-limit restrictions. Check your billing/usage or try again shortly.', 'nectar-geo' );
 		}
 
 		if ( 404 === $code ) {
-			return __( 'The selected model was not found for this account. Choose a different model from the dropdown and try again.', 'ai-reach-geotracker' );
+			return __( 'The selected model was not found for this account. Choose a different model from the dropdown and try again.', 'nectar-geo' );
 		}
 
-		return sprintf( /* translators: %d HTTP response code */ __( 'API returned HTTP code %d.', 'ai-reach-geotracker' ), $code );
+		return sprintf( /* translators: %d HTTP response code */ __( 'API returned HTTP code %d.', 'nectar-geo' ), $code );
 	}
 
 	/**
@@ -396,7 +396,7 @@ class AI_Reach_Scanner {
 	public function run_scan_for_engine( string $engine_id ) {
 		if ( empty( $this->api_key ) ) {
 			/* translators: %s provider label */
-			return new WP_Error( 'missing_key', __( 'API key is not configured. Please add your key in the Configuration tab.', 'ai-reach-geotracker' ) );
+			return new WP_Error( 'missing_key', __( 'API key is not configured. Please add your key in the Configuration tab.', 'nectar-geo' ) );
 		}
 
 		$prompt = $this->get_scan_prompt();
@@ -445,7 +445,7 @@ class AI_Reach_Scanner {
 			'Content-Type'  => 'application/json',
 			'Authorization' => 'Bearer ' . trim( $this->api_key ),
 			'HTTP-Referer'  => esc_url( home_url() ),
-			'X-Title'       => 'AI Reach GEO Tracker',
+			'X-Title'       => 'Nectar GEO',
 		);
 		$raw     = $this->do_http_scan( $url, $body, $headers );
 		if ( is_wp_error( $raw ) ) {
@@ -599,7 +599,7 @@ class AI_Reach_Scanner {
 			$err_data = json_decode( $res_body, true );
 			$err_msg  = isset( $err_data['error']['message'] )
 				? $err_data['error']['message']
-				: /* translators: %d HTTP response code */ sprintf( __( 'API response code %d.', 'ai-reach-geotracker' ), $code );
+				: /* translators: %d HTTP response code */ sprintf( __( 'API response code %d.', 'nectar-geo' ), $code );
 			return new WP_Error( 'api_error', $err_msg );
 		}
 		return wp_remote_retrieve_body( $response );
@@ -616,7 +616,7 @@ class AI_Reach_Scanner {
 	private function parse_openai_style_response( string $body ) {
 		$data = json_decode( $body, true );
 		if ( ! isset( $data['choices'][0]['message']['content'] ) ) {
-			return new WP_Error( 'invalid_response', __( 'Invalid response format from API.', 'ai-reach-geotracker' ) );
+			return new WP_Error( 'invalid_response', __( 'Invalid response format from API.', 'nectar-geo' ) );
 		}
 		$content = $data['choices'][0]['message']['content'];
 		return $this->extract_mentioned_and_transcript( $content );
@@ -631,7 +631,7 @@ class AI_Reach_Scanner {
 	private function parse_gemini_response( string $body ) {
 		$data = json_decode( $body, true );
 		if ( ! isset( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
-			return new WP_Error( 'invalid_response', __( 'Invalid response format from Gemini API.', 'ai-reach-geotracker' ) );
+			return new WP_Error( 'invalid_response', __( 'Invalid response format from Gemini API.', 'nectar-geo' ) );
 		}
 		$content = $data['candidates'][0]['content']['parts'][0]['text'];
 		return $this->extract_mentioned_and_transcript( $content );
@@ -646,7 +646,7 @@ class AI_Reach_Scanner {
 	private function parse_anthropic_response( string $body ) {
 		$data = json_decode( $body, true );
 		if ( ! isset( $data['content'][0]['text'] ) ) {
-			return new WP_Error( 'invalid_response', __( 'Invalid response format from Anthropic API.', 'ai-reach-geotracker' ) );
+			return new WP_Error( 'invalid_response', __( 'Invalid response format from Anthropic API.', 'nectar-geo' ) );
 		}
 		$content = $data['content'][0]['text'];
 		return $this->extract_mentioned_and_transcript( $content );
@@ -734,20 +734,20 @@ class AI_Reach_Scanner {
 
 		if ( $has_schema ) {
 			$checklist['schema_alignment'] = array(
-				'title'          => __( '1. Brand Entity Alignment (Schema)', 'ai-reach-geotracker' ),
+				'title'          => __( '1. Brand Entity Alignment (Schema)', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
-				'description'    => __( 'Schema.org Brand, Organization, or WebSite JSON-LD markup is present on your homepage.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'No action required. Your semantic structure is ready for AI LLM relationship crawlers.', 'ai-reach-geotracker' ),
+				'description'    => __( 'Schema.org Brand, Organization, or WebSite JSON-LD markup is present on your homepage.', 'nectar-geo' ),
+				'recommendation' => __( 'No action required. Your semantic structure is ready for AI LLM relationship crawlers.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['schema_alignment'] = array(
-				'title'          => __( '1. Brand Entity Alignment (Schema)', 'ai-reach-geotracker' ),
+				'title'          => __( '1. Brand Entity Alignment (Schema)', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
-				'description'    => __( 'No Organization or Brand schema was detected in your homepage HTML header.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'Paste this JSON-LD schema markup inside the head section of your site to establish entity authority:', 'ai-reach-geotracker' ),
+				'description'    => __( 'No Organization or Brand schema was detected in your homepage HTML header.', 'nectar-geo' ),
+				'recommendation' => __( 'Paste this JSON-LD schema markup inside the head section of your site to establish entity authority:', 'nectar-geo' ),
 				'snippet'        => sprintf(
 					"<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Organization\",\n  \"name\": \"%s\",\n  \"url\": \"%s\",\n  \"logo\": \"[Logo_URL]\"\n}\n</script>",
 					esc_js( $brand ),
@@ -778,24 +778,24 @@ class AI_Reach_Scanner {
 
 		if ( $fresh ) {
 			$checklist['freshness'] = array(
-				'title'          => __( '2. Information Freshness (Content Age)', 'ai-reach-geotracker' ),
+				'title'          => __( '2. Information Freshness (Content Age)', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
 				/* translators: %s: publish date of the latest post */
-				'description'    => sprintf( __( 'Your latest content was published on %s (less than 30 days ago).', 'ai-reach-geotracker' ), $post_date ),
-				'recommendation' => __( 'No action required. Keep updating your site regularly to feed real-time search models.', 'ai-reach-geotracker' ),
+				'description'    => sprintf( __( 'Your latest content was published on %s (less than 30 days ago).', 'nectar-geo' ), $post_date ),
+				'recommendation' => __( 'No action required. Keep updating your site regularly to feed real-time search models.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['freshness'] = array(
-				'title'          => __( '2. Information Freshness (Content Age)', 'ai-reach-geotracker' ),
+				'title'          => __( '2. Information Freshness (Content Age)', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
 				'description'    => ! empty( $post_date )
 					/* translators: %s: publish date of the latest post */
-					? sprintf( __( 'The latest post was published on %s (older than 30 days ago).', 'ai-reach-geotracker' ), $post_date )
-					: __( 'No published posts were found on your site.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'Publish a new post or update an existing one weekly. AI crawlers favor active content domains.', 'ai-reach-geotracker' ),
+					? sprintf( __( 'The latest post was published on %s (older than 30 days ago).', 'nectar-geo' ), $post_date )
+					: __( 'No published posts were found on your site.', 'nectar-geo' ),
+				'recommendation' => __( 'Publish a new post or update an existing one weekly. AI crawlers favor active content domains.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		}
@@ -818,20 +818,20 @@ class AI_Reach_Scanner {
 
 		if ( $has_answerability ) {
 			$checklist['answerability'] = array(
-				'title'          => __( '3. Direct Answerability (FAQ/Tables)', 'ai-reach-geotracker' ),
+				'title'          => __( '3. Direct Answerability (FAQ/Tables)', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
-				'description'    => __( 'Structured tables, lists, or details tags are present on your homepage.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'No action required. Your structure supports featured answer extractions.', 'ai-reach-geotracker' ),
+				'description'    => __( 'Structured tables, lists, or details tags are present on your homepage.', 'nectar-geo' ),
+				'recommendation' => __( 'No action required. Your structure supports featured answer extractions.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['answerability'] = array(
-				'title'          => __( '3. Direct Answerability (FAQ/Tables)', 'ai-reach-geotracker' ),
+				'title'          => __( '3. Direct Answerability (FAQ/Tables)', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
-				'description'    => __( 'No tabular listings or FAQ panels detected on the homepage.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'Insert an FAQ block or a direct comparison table. AI engines look for structured blocks to parse answers directly:', 'ai-reach-geotracker' ),
+				'description'    => __( 'No tabular listings or FAQ panels detected on the homepage.', 'nectar-geo' ),
+				'recommendation' => __( 'Insert an FAQ block or a direct comparison table. AI engines look for structured blocks to parse answers directly:', 'nectar-geo' ),
 				'snippet'        => "<h3>Frequently Asked Questions</h3>\n<details>\n  <summary>What is our brand service?</summary>\n  <p>We provide industry-leading services directly to your project.</p>\n</details>",
 			);
 		}
@@ -853,20 +853,20 @@ class AI_Reach_Scanner {
 
 		if ( $has_conversational ) {
 			$checklist['conversational'] = array(
-				'title'          => __( '4. Conversational Tone', 'ai-reach-geotracker' ),
+				'title'          => __( '4. Conversational Tone', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
-				'description'    => __( 'Homepage copy exhibits natural, first/second-person pronouns suited for chat inputs.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'No action required. The copy is organic and fits standard prompt response styles.', 'ai-reach-geotracker' ),
+				'description'    => __( 'Homepage copy exhibits natural, first/second-person pronouns suited for chat inputs.', 'nectar-geo' ),
+				'recommendation' => __( 'No action required. The copy is organic and fits standard prompt response styles.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['conversational'] = array(
-				'title'          => __( '4. Conversational Tone', 'ai-reach-geotracker' ),
+				'title'          => __( '4. Conversational Tone', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
-				'description'    => __( 'Content has a low density of natural, relational terms (under 10 references).', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'Revise text from passive academic tone to conversational tone. Optimize for NLP (Natural Language Processing):', 'ai-reach-geotracker' ),
+				'description'    => __( 'Content has a low density of natural, relational terms (under 10 references).', 'nectar-geo' ),
+				'recommendation' => __( 'Revise text from passive academic tone to conversational tone. Optimize for NLP (Natural Language Processing):', 'nectar-geo' ),
 				'snippet'        => "Change: \"Services are rendered by the brand to customers.\"\nTo: \"We deliver our personalized services directly to you.\"",
 			);
 		}
@@ -899,21 +899,21 @@ class AI_Reach_Scanner {
 
 		if ( $has_contextual ) {
 			$checklist['relevance'] = array(
-				'title'          => __( '5. Contextual Relevance (Keywords in Headings)', 'ai-reach-geotracker' ),
+				'title'          => __( '5. Contextual Relevance (Keywords in Headings)', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
-				'description'    => __( 'All defined target keywords are indexed within title tags or H1/H2 header tags.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'No action required. Your heading hierarchy clearly links keywords with site context.', 'ai-reach-geotracker' ),
+				'description'    => __( 'All defined target keywords are indexed within title tags or H1/H2 header tags.', 'nectar-geo' ),
+				'recommendation' => __( 'No action required. Your heading hierarchy clearly links keywords with site context.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['relevance'] = array(
-				'title'          => __( '5. Contextual Relevance (Keywords in Headings)', 'ai-reach-geotracker' ),
+				'title'          => __( '5. Contextual Relevance (Keywords in Headings)', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
 				/* translators: %s: comma-separated list of missing target keywords */
-				'description'    => sprintf( __( 'Missing target keywords in headings: %s.', 'ai-reach-geotracker' ), implode( ', ', $missing_kw ) ),
-				'recommendation' => __( 'Ensure major keywords appear organically inside your H1 and H2 tags:', 'ai-reach-geotracker' ),
+				'description'    => sprintf( __( 'Missing target keywords in headings: %s.', 'nectar-geo' ), implode( ', ', $missing_kw ) ),
+				'recommendation' => __( 'Ensure major keywords appear organically inside your H1 and H2 tags:', 'nectar-geo' ),
 				'snippet'        => sprintf( '<h1>%s: The Premium [Your Keyword] Solution</h1>', esc_html( $brand ) ),
 			);
 		}
@@ -925,21 +925,21 @@ class AI_Reach_Scanner {
 		// Pillar 6: Direct Brand Citation.
 		if ( $mention_count > 0 ) {
 			$checklist['brand_citation'] = array(
-				'title'          => __( '6. Direct Brand Citation', 'ai-reach-geotracker' ),
+				'title'          => __( '6. Direct Brand Citation', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
 				/* translators: %d: number of AI engines that mentioned the brand */
-				'description'    => sprintf( __( 'Your brand was mentioned in %d of the 5 active AI engine search results.', 'ai-reach-geotracker' ), $mention_count ),
-				'recommendation' => __( 'Good off-page presence. Continue building reviews and mentions.', 'ai-reach-geotracker' ),
+				'description'    => sprintf( __( 'Your brand was mentioned in %d of the 5 active AI engine search results.', 'nectar-geo' ), $mention_count ),
+				'recommendation' => __( 'Good off-page presence. Continue building reviews and mentions.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['brand_citation'] = array(
-				'title'          => __( '6. Direct Brand Citation', 'ai-reach-geotracker' ),
+				'title'          => __( '6. Direct Brand Citation', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
-				'description'    => __( 'Your brand was not cited in any of the simulated AI search answers.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'Develop organic PR, secure references on directory listings, and publish reviews to establish digital footprint.', 'ai-reach-geotracker' ),
+				'description'    => __( 'Your brand was not cited in any of the simulated AI search answers.', 'nectar-geo' ),
+				'recommendation' => __( 'Develop organic PR, secure references on directory listings, and publish reviews to establish digital footprint.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		}
@@ -958,20 +958,20 @@ class AI_Reach_Scanner {
 
 		if ( $has_authority ) {
 			$checklist['authority_sources'] = array(
-				'title'          => __( '7. Authority Sources Mentions', 'ai-reach-geotracker' ),
+				'title'          => __( '7. Authority Sources Mentions', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
-				'description'    => __( 'AI engine transcripts refer to discussions/sources on authority domains.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'No action required. Your authority context is successfully mapped by AI crawlers.', 'ai-reach-geotracker' ),
+				'description'    => __( 'AI engine transcripts refer to discussions/sources on authority domains.', 'nectar-geo' ),
+				'recommendation' => __( 'No action required. Your authority context is successfully mapped by AI crawlers.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['authority_sources'] = array(
-				'title'          => __( '7. Authority Sources Mentions', 'ai-reach-geotracker' ),
+				'title'          => __( '7. Authority Sources Mentions', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
-				'description'    => __( 'No authority platform references (Reddit, Quora, Wiki) were found alongside mentions.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'Participate actively in relevant subreddits, write detailed Quora answers, and secure links on high-authority wikis/media.', 'ai-reach-geotracker' ),
+				'description'    => __( 'No authority platform references (Reddit, Quora, Wiki) were found alongside mentions.', 'nectar-geo' ),
+				'recommendation' => __( 'Participate actively in relevant subreddits, write detailed Quora answers, and secure links on high-authority wikis/media.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		}
@@ -979,8 +979,8 @@ class AI_Reach_Scanner {
 		// Pillar 8: Sentiment Vector.
 		$sentiment_status = 'optimized';
 		$sentiment_score  = 10;
-		$sentiment_desc   = __( 'AI response sentiment is positive or neutral.', 'ai-reach-geotracker' );
-		$sentiment_recom  = __( 'Keep up the customer service and clean reputational records.', 'ai-reach-geotracker' );
+		$sentiment_desc   = __( 'AI response sentiment is positive or neutral.', 'nectar-geo' );
+		$sentiment_recom  = __( 'Keep up the customer service and clean reputational records.', 'nectar-geo' );
 
 		if ( ! empty( $all_transcripts ) ) {
 			$negatives = array( 'poor', 'bad', 'avoid', 'worst', 'unreliable', 'scam', 'complaint', 'expensive', 'disappoint' );
@@ -999,13 +999,13 @@ class AI_Reach_Scanner {
 				$sentiment_status = 'action';
 				$sentiment_score  = 0;
 				/* translators: 1: number of negative keyword matches, 2: number of positive keyword matches */
-				$sentiment_desc  = sprintf( __( 'Negative sentiment cues detected: negative keyword matches (%1$d) exceed positive matches (%2$d).', 'ai-reach-geotracker' ), $neg_matches, $pos_matches );
-				$sentiment_recom = __( 'Evaluate transcripts for complaints, address user reviews online, and build a positive citation campaign.', 'ai-reach-geotracker' );
+				$sentiment_desc  = sprintf( __( 'Negative sentiment cues detected: negative keyword matches (%1$d) exceed positive matches (%2$d).', 'nectar-geo' ), $neg_matches, $pos_matches );
+				$sentiment_recom = __( 'Evaluate transcripts for complaints, address user reviews online, and build a positive citation campaign.', 'nectar-geo' );
 			}
 		}
 
 		$checklist['sentiment'] = array(
-			'title'          => __( '8. Sentiment Vector', 'ai-reach-geotracker' ),
+			'title'          => __( '8. Sentiment Vector', 'nectar-geo' ),
 			'status'         => $sentiment_status,
 			'score'          => $sentiment_score,
 			'description'    => $sentiment_desc,
@@ -1031,20 +1031,20 @@ class AI_Reach_Scanner {
 
 		if ( $has_author_bio ) {
 			$checklist['eeat'] = array(
-				'title'          => __( '9. EEAT Score (Author Bios)', 'ai-reach-geotracker' ),
+				'title'          => __( '9. EEAT Score (Author Bios)', 'nectar-geo' ),
 				'status'         => 'optimized',
 				'score'          => 10,
-				'description'    => __( 'Found biographical profile details for administrators or editor authors.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'No action required. Your publishing structure demonstrates author credibility.', 'ai-reach-geotracker' ),
+				'description'    => __( 'Found biographical profile details for administrators or editor authors.', 'nectar-geo' ),
+				'recommendation' => __( 'No action required. Your publishing structure demonstrates author credibility.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		} else {
 			$checklist['eeat'] = array(
-				'title'          => __( '9. EEAT Score (Author Bios)', 'ai-reach-geotracker' ),
+				'title'          => __( '9. EEAT Score (Author Bios)', 'nectar-geo' ),
 				'status'         => 'action',
 				'score'          => 0,
-				'description'    => __( 'No author biographical descriptions were found in active WordPress profiles.', 'ai-reach-geotracker' ),
-				'recommendation' => __( 'Fill in the "Biographical Info" text area inside your profile under WordPress Users settings to feed entity authority.', 'ai-reach-geotracker' ),
+				'description'    => __( 'No author biographical descriptions were found in active WordPress profiles.', 'nectar-geo' ),
+				'recommendation' => __( 'Fill in the "Biographical Info" text area inside your profile under WordPress Users settings to feed entity authority.', 'nectar-geo' ),
 				'snippet'        => '',
 			);
 		}

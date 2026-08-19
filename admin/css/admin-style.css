@@ -1,11 +1,11 @@
 /*
- * AI Reach (GEO Tracker) - Admin Dashboard Stylesheet
- * Scoped to #ai-reach-dashboard to prevent conflicts with WordPress default admin styles.
+ * Nectar GEO - Admin Dashboard Stylesheet
+ * Scoped to #nectar-geo-dashboard to prevent conflicts with WordPress default admin styles.
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono&display=swap');
 
-#ai-reach-dashboard {
+#nectar-geo-dashboard {
 	--purple-500: #818cf8;
 	--purple-600: #6366f1;
 	--purple-700: #4f46e5;
