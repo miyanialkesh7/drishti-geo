@@ -601,9 +601,9 @@ class Nectar_GEO_Admin {
 
 			<!-- Tab Navigation -->
 			<nav class="nav-tab-wrapper custom-tabs">
-				<a href="#tab-command-center" class="nav-tab nav-tab-active" data-tab="tab-command-center"><span class="dashicons dashicons-dashboard"></span> <?php esc_html_e( 'Command Center', 'nectar-geo' ); ?></a>
-				<a href="#tab-checklist" class="nav-tab" data-tab="tab-checklist"><span class="dashicons dashicons-editor-ul"></span> <?php esc_html_e( '9-Point Deep Dive', 'nectar-geo' ); ?></a>
-				<a href="#tab-settings" class="nav-tab" data-tab="tab-settings"><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'Configuration', 'nectar-geo' ); ?></a>
+				<a href="#tab-command-center" class="nav-tab nav-tab-active" data-tab="tab-command-center" aria-label="<?php esc_attr_e( 'Command Center', 'nectar-geo' ); ?>"><span class="dashicons dashicons-dashboard"></span> <?php esc_html_e( 'Command Center', 'nectar-geo' ); ?></a>
+				<a href="#tab-checklist" class="nav-tab" data-tab="tab-checklist" aria-label="<?php esc_attr_e( '9-Point Deep Dive', 'nectar-geo' ); ?>"><span class="dashicons dashicons-editor-ul"></span> <?php esc_html_e( '9-Point Deep Dive', 'nectar-geo' ); ?></a>
+				<a href="#tab-settings" class="nav-tab" data-tab="tab-settings" aria-label="<?php esc_attr_e( 'Configuration', 'nectar-geo' ); ?>"><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'Configuration', 'nectar-geo' ); ?></a>
 			</nav>
 
 			<main class="dashboard-content">
@@ -872,7 +872,7 @@ class Nectar_GEO_Admin {
 											<th scope="row"><label for="<?php echo esc_attr( $field_key ); ?>"><?php echo esc_html( $p_cfg['label'] ); ?></label></th>
 											<td>
 												<div class="api-input-row">
-													<input name="<?php echo esc_attr( $field_key ); ?>" type="password" id="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $p_cfg['key_val'] ); ?>" class="regular-text provider-api-key" data-provider="<?php echo esc_attr( $p_key ); ?>" placeholder="<?php echo esc_attr( $p_cfg['placeholder'] ); ?>" />
+													<input name="<?php echo esc_attr( $field_key ); ?>" type="password" id="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $p_cfg['key_val'] ); ?>" class="regular-text provider-api-key" data-provider="<?php echo esc_attr( $p_key ); ?>" placeholder="<?php echo esc_attr( $p_cfg['placeholder'] ); ?>" aria-label="<?php echo esc_attr( $p_cfg['label'] ); ?>" />
 													<button type="button" class="button button-secondary test-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'nectar-geo' ); ?></button>
 												</div>
 												<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>"></span>

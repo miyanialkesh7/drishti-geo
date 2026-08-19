@@ -153,18 +153,36 @@ class Nectar_GEO_Scanner {
 		}
 
 		$effective_model = $this->get_test_model( $provider, $model );
+
+		// Cache the smoke-test result briefly, keyed to this exact provider/model/key
+		// combination, so repeated clicks don't re-hit the provider's API each time.
+		// Any change to the key or model produces a different cache key automatically.
+		$cache_key = 'nectar_geo_test_' . md5( $provider . '|' . $effective_model . '|' . $api_key );
+		$cached    = get_transient( $cache_key );
+		if ( false !== $cached ) {
+			return true === $cached ? true : new WP_Error( 'api_error', $cached );
+		}
+
 		switch ( $provider ) {
 			case 'openai':
-				return $this->test_openai( $api_key, $effective_model );
+				$result = $this->test_openai( $api_key, $effective_model );
+				break;
 			case 'gemini':
-				return $this->test_gemini( $api_key, $effective_model );
+				$result = $this->test_gemini( $api_key, $effective_model );
+				break;
 			case 'perplexity':
-				return $this->test_perplexity( $api_key, $effective_model );
+				$result = $this->test_perplexity( $api_key, $effective_model );
+				break;
 			case 'anthropic':
-				return $this->test_anthropic( $api_key, $effective_model );
+				$result = $this->test_anthropic( $api_key, $effective_model );
+				break;
 			default: // openrouter.
-				return $this->test_openrouter( $api_key, $effective_model );
+				$result = $this->test_openrouter( $api_key, $effective_model );
 		}
+
+		set_transient( $cache_key, is_wp_error( $result ) ? $result->get_error_message() : true, MINUTE_IN_SECONDS );
+
+		return $result;
 	}
 
 	/**
@@ -1015,14 +1033,22 @@ class Nectar_GEO_Scanner {
 
 		// Pillar 9: EEAT Score (Author Bio).
 		$has_author_bio = false;
-		$users          = get_users(
+		$user_ids       = get_users(
 			array(
 				'role__in' => array( 'administrator', 'editor' ),
 				'number'   => 10,
+				'fields'   => 'ID',
 			)
 		);
-		foreach ( $users as $user ) {
-			$bio = get_user_meta( $user->ID, 'description', true );
+
+		// Prime the user meta cache in a single query so get_user_meta() below reads
+		// from cache instead of issuing one query per user (avoids an N+1 loop).
+		if ( ! empty( $user_ids ) ) {
+			update_meta_cache( 'user', $user_ids );
+		}
+
+		foreach ( $user_ids as $user_id ) {
+			$bio = get_user_meta( $user_id, 'description', true );
 			if ( ! empty( $bio ) ) {
 				$has_author_bio = true;
 				break;
