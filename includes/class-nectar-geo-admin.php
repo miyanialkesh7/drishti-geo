@@ -122,8 +122,8 @@ class Nectar_GEO_Admin {
 					'testing'               => __( 'Testing...', 'nectar-geo' ),
 					'testConnection'        => __( 'Test Connection', 'nectar-geo' ),
 					'networkError'          => __( 'Network communication error occurred.', 'nectar-geo' ),
-					'robotsFixFailed'       => __( 'Robots.txt fix request failed.', 'nectar-geo' ),
-					'autofixBlocker'        => __( 'Auto-Fix Blocker', 'nectar-geo' ),
+					'robotsFixFailed'       => __( 'AI blocker fix request failed.', 'nectar-geo' ),
+					'autofixBlocker'        => __( 'Auto-Fix via ai.txt', 'nectar-geo' ),
 					'fixing'                => __( 'Fixing...', 'nectar-geo' ),
 					/* translators: %s: error message returned by the failed request. */
 					'errorPrefix'           => __( 'Error: %s', 'nectar-geo' ),
@@ -166,35 +166,39 @@ class Nectar_GEO_Admin {
 		if ( '0' === get_option( 'blog_public', '1' ) ) {
 			$blocked = true;
 			$reason  = __( 'WordPress "Search Engine Visibility" option is set to discourage indexing, which inserts Disallow: / to your virtual robots.txt.', 'nectar-geo' );
-			return array(
-				'blocked' => true,
-				'reason'  => $reason,
-			);
 		}
 
 		// 2. Check physical robots.txt file in root
-		$robots_file = ABSPATH . 'robots.txt';
-		if ( file_exists( $robots_file ) ) {
-			$wp_filesystem = $this->get_filesystem();
-			$content       = $wp_filesystem ? $wp_filesystem->get_contents( $robots_file ) : false;
-			if ( $content ) {
-				// Pattern check for Disallow: / under global or AI bot headings.
-				if ( preg_match( '/User-agent:\s*\*\s*Disallow:\s*\/\s*($|\n)/i', $content ) ) {
-					$blocked = true;
-					$reason  = __( 'Physical robots.txt file exists and contains a global "Disallow: /" directive.', 'nectar-geo' );
-				} else {
-					// Check specific AI bots.
-					$ai_agents = array( 'GPTBot', 'Google-Extended', 'Anthropic-ai', 'PerplexityBot' );
-					foreach ( $ai_agents as $agent ) {
-						if ( preg_match( '/User-agent:\s*' . preg_quote( $agent, '/' ) . '.*Disallow:\s*\/\s*($|\n)/is', $content ) ) {
-							$blocked = true;
-							/* translators: %s: AI crawler user-agent name, e.g. "GPTBot" */
-							$reason = sprintf( __( 'Physical robots.txt explicitly blocks "%s" from crawling.', 'nectar-geo' ), $agent );
-							break;
+		if ( ! $blocked ) {
+			$robots_file = ABSPATH . 'robots.txt';
+			if ( file_exists( $robots_file ) ) {
+				$wp_filesystem = $this->get_filesystem();
+				$content       = $wp_filesystem ? $wp_filesystem->get_contents( $robots_file ) : false;
+				if ( $content ) {
+					// Pattern check for Disallow: / under global or AI bot headings.
+					if ( preg_match( '/User-agent:\s*\*\s*Disallow:\s*\/\s*($|\n)/i', $content ) ) {
+						$blocked = true;
+						$reason  = __( 'Physical robots.txt file exists and contains a global "Disallow: /" directive.', 'nectar-geo' );
+					} else {
+						// Check specific AI bots.
+						$ai_agents = array( 'GPTBot', 'Google-Extended', 'Anthropic-ai', 'PerplexityBot' );
+						foreach ( $ai_agents as $agent ) {
+							if ( preg_match( '/User-agent:\s*' . preg_quote( $agent, '/' ) . '.*Disallow:\s*\/\s*($|\n)/is', $content ) ) {
+								$blocked = true;
+								/* translators: %s: AI crawler user-agent name, e.g. "GPTBot" */
+								$reason = sprintf( __( 'Physical robots.txt explicitly blocks "%s" from crawling.', 'nectar-geo' ), $agent );
+								break;
+							}
 						}
 					}
 				}
 			}
+		}
+
+		// 3. A site-root ai.txt that explicitly permits AI crawlers overrides a robots.txt-level block.
+		if ( $blocked && $this->ai_txt_allows_crawlers() ) {
+			$blocked = false;
+			$reason  = '';
 		}
 
 		return array(
@@ -204,39 +208,32 @@ class Nectar_GEO_Admin {
 	}
 
 	/**
-	 * Auto-Fix Robots.txt issues
+	 * Whether a site-root ai.txt exists and does not itself contain a Disallow directive.
+	 */
+	private function ai_txt_allows_crawlers(): bool {
+		$aitxt_file = ABSPATH . 'ai.txt';
+		if ( ! file_exists( $aitxt_file ) ) {
+			return false;
+		}
+
+		$wp_filesystem = $this->get_filesystem();
+		$content       = $wp_filesystem ? $wp_filesystem->get_contents( $aitxt_file ) : false;
+
+		return is_string( $content ) && '' !== $content && ! preg_match( '/Disallow:\s*\//i', $content );
+	}
+
+	/**
+	 * Auto-Fix AI blockers: restore search visibility and grant AI crawlers explicit
+	 * access via ai.txt, rather than editing the physical robots.txt file.
 	 */
 	private function autofix_robots_txt() {
-		// 1. Check Search Engine Visibility setting
+		// 1. Check Search Engine Visibility setting.
 		if ( '0' === get_option( 'blog_public', '1' ) ) {
 			update_option( 'blog_public', '1' );
 		}
 
-		// 2. Fix physical robots.txt if exists
-		$robots_file = ABSPATH . 'robots.txt';
-		if ( file_exists( $robots_file ) ) {
-			$wp_filesystem = $this->get_filesystem();
-			if ( ! $wp_filesystem ) {
-				return new WP_Error( 'fs_unavailable', __( 'Could not access the filesystem to edit robots.txt. Please edit the file manually.', 'nectar-geo' ) );
-			}
-			$content = $wp_filesystem->get_contents( $robots_file );
-			if ( $content ) {
-				// Remove global blocking.
-				$content = preg_replace( '/User-agent:\s*\*\s*Disallow:\s*\/\s*/i', "User-agent: *\nDisallow:", $content );
-
-				// Remove specific AI bot blocks.
-				$ai_agents = array( 'GPTBot', 'Google-Extended', 'Anthropic-ai', 'PerplexityBot' );
-				foreach ( $ai_agents as $agent ) {
-					$content = preg_replace( '/User-agent:\s*' . preg_quote( $agent, '/' ) . '\s*Disallow:\s*\/\s*/i', 'User-agent: ' . $agent . "\nAllow: /", $content );
-				}
-
-				if ( ! $wp_filesystem->put_contents( $robots_file, $content, FS_CHMOD_FILE ) ) {
-					return new WP_Error( 'write_failed', __( 'Could not write to physical robots.txt file. Please check file permissions or edit manually.', 'nectar-geo' ) );
-				}
-			}
-		}
-
-		return true;
+		// 2. Grant AI crawlers explicit access via ai.txt.
+		return $this->write_ai_txt();
 	}
 
 	/**
@@ -312,15 +309,19 @@ class Nectar_GEO_Admin {
 			return;
 		}
 
-		$api_key         = isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '';
-		$posted_provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : 'openrouter';
-		$model           = isset( $_POST['model'] ) ? sanitize_text_field( wp_unslash( $_POST['model'] ) ) : '';
-
+		$posted_provider   = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : 'openrouter';
 		$allowed_providers = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
 		$provider          = in_array( $posted_provider, $allowed_providers, true ) ? $posted_provider : 'openrouter';
 
 		$scanner = $this->get_scanner();
-		$test    = $scanner->test_connection( $api_key, $provider, $model );
+
+		if ( ! empty( $_POST['use_existing'] ) ) {
+			$test = $scanner->test_existing_connection( $provider );
+		} else {
+			$api_key = isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '';
+			$model   = isset( $_POST['model'] ) ? sanitize_text_field( wp_unslash( $_POST['model'] ) ) : '';
+			$test    = $scanner->test_connection( $api_key, $provider, $model );
+		}
 
 		if ( is_wp_error( $test ) ) {
 			wp_send_json_error( array( 'message' => $test->get_error_message() ) );
@@ -411,7 +412,7 @@ class Nectar_GEO_Admin {
 	}
 
 	/**
-	 * AJAX: apply the robots.txt/search-visibility auto-fix.
+	 * AJAX: apply the AI-blocker auto-fix (search visibility + ai.txt).
 	 */
 	public function ajax_autofix_robots(): void {
 		check_ajax_referer( 'nectar_geo_nonce', 'nonce' );
@@ -427,7 +428,7 @@ class Nectar_GEO_Admin {
 			return;
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Robots.txt restrictions removed successfully!', 'nectar-geo' ) ) );
+		wp_send_json_success( array( 'message' => __( 'AI crawlers granted access via ai.txt!', 'nectar-geo' ) ) );
 	}
 
 	/**
@@ -497,6 +498,13 @@ class Nectar_GEO_Admin {
 			if ( isset( $_POST[ $field ] ) && is_string( $_POST[ $field ] ) ) {
 				update_option( 'nectar_geo_' . $p . '_model', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
 			}
+		}
+
+		// Per-provider "use existing connection" toggle (only meaningful where a WordPress
+		// AI Client connection was actually detected; harmless no-op otherwise).
+		foreach ( $provider_keys as $p ) {
+			$field = $p . '_use_existing';
+			update_option( 'nectar_geo_' . $p . '_use_existing', isset( $_POST[ $field ] ) ? '1' : '0' );
 		}
 
 		$daily = isset( $_POST['daily_scan'] ) ? '1' : '0';
@@ -595,7 +603,7 @@ class Nectar_GEO_Admin {
 				<div class="alert-content">
 					<h3><?php esc_html_e( 'AI Blockers Detected in robots.txt!', 'nectar-geo' ); ?></h3>
 					<p id="robots-warning-text"><?php echo esc_html( $robots_status['reason'] ); ?></p>
-					<button id="autofix-robots-btn" class="button button-primary action-btn-red"><?php esc_html_e( 'Auto-Fix Blocker', 'nectar-geo' ); ?></button>
+					<button id="autofix-robots-btn" class="button button-primary action-btn-red"><?php esc_html_e( 'Auto-Fix via ai.txt', 'nectar-geo' ); ?></button>
 				</div>
 			</div>
 
@@ -826,56 +834,81 @@ class Nectar_GEO_Admin {
 									// Build provider config for key + model rows.
 									$providers_ui = array(
 										'openrouter' => array(
-											'label'       => __( 'API Key', 'nectar-geo' ),
-											'placeholder' => 'sk-or-v1-...',
-											'key_val'     => $openrouter_key,
-											'model_val'   => $openrouter_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'label'        => __( 'API Key', 'nectar-geo' ),
+											'placeholder'  => 'sk-or-v1-...',
+											'key_val'      => $openrouter_key,
+											'model_val'    => $openrouter_model,
+											'desc'         => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'has_existing' => false,
 										),
 										'openai'     => array(
-											'label'       => __( 'API Key', 'nectar-geo' ),
-											'placeholder' => 'sk-...',
-											'key_val'     => $openai_key,
-											'model_val'   => $openai_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'label'        => __( 'API Key', 'nectar-geo' ),
+											'placeholder'  => 'sk-...',
+											'key_val'      => $openai_key,
+											'model_val'    => $openai_model,
+											'desc'         => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'has_existing' => Nectar_GEO_Scanner::has_existing_connection( 'openai' ),
 										),
 										'gemini'     => array(
-											'label'       => __( 'API Key', 'nectar-geo' ),
-											'placeholder' => 'AIza...',
-											'key_val'     => $gemini_key,
-											'model_val'   => $gemini_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'label'        => __( 'API Key', 'nectar-geo' ),
+											'placeholder'  => 'AIza...',
+											'key_val'      => $gemini_key,
+											'model_val'    => $gemini_model,
+											'desc'         => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'has_existing' => Nectar_GEO_Scanner::has_existing_connection( 'gemini' ),
 										),
 										'perplexity' => array(
-											'label'       => __( 'API Key', 'nectar-geo' ),
-											'placeholder' => 'pplx-...',
-											'key_val'     => $perplexity_key,
-											'model_val'   => $perplexity_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'label'        => __( 'API Key', 'nectar-geo' ),
+											'placeholder'  => 'pplx-...',
+											'key_val'      => $perplexity_key,
+											'model_val'    => $perplexity_model,
+											'desc'         => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'has_existing' => false,
 										),
 										'anthropic'  => array(
-											'label'       => __( 'API Key', 'nectar-geo' ),
-											'placeholder' => 'sk-ant-...',
-											'key_val'     => $anthropic_key,
-											'model_val'   => $anthropic_model,
-											'desc'        => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'label'        => __( 'API Key', 'nectar-geo' ),
+											'placeholder'  => 'sk-ant-...',
+											'key_val'      => $anthropic_key,
+											'model_val'    => $anthropic_model,
+											'desc'         => __( 'Enter the API key for your selected provider to enable AI scans. You can obtain this key from the provider\'s developer platform.', 'nectar-geo' ),
+											'has_existing' => Nectar_GEO_Scanner::has_existing_connection( 'anthropic' ),
 										),
 									);
 									foreach ( $providers_ui as $p_key => $p_cfg ) :
-										$is_active   = ( $api_provider === $p_key );
-										$row_style   = $is_active ? '' : 'display:none;';
-										$models      = Nectar_GEO_Scanner::get_provider_models( $p_key );
-										$field_key   = esc_attr( $p_key ) . '_key';
-										$field_model = esc_attr( $p_key ) . '_model';
+										$is_active      = ( $api_provider === $p_key );
+										$use_existing   = $p_cfg['has_existing'] && ( '1' === get_option( 'nectar_geo_' . $p_key . '_use_existing', '0' ) );
+										$row_style      = $is_active ? '' : 'display:none;';
+										$manual_style   = $use_existing ? 'display:none;' : '';
+										$model_style    = ( $is_active && ! $use_existing ) ? '' : 'display:none;';
+										$models         = Nectar_GEO_Scanner::get_provider_models( $p_key );
+										$field_key      = esc_attr( $p_key ) . '_key';
+										$field_model    = esc_attr( $p_key ) . '_model';
+										$field_existing = esc_attr( $p_key ) . '_use_existing';
 										?>
-										<tr class="provider-key-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
+										<?php if ( $p_cfg['has_existing'] ) : ?>
+											<tr class="provider-key-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
+												<th scope="row"><?php esc_html_e( 'Existing Connection', 'nectar-geo' ); ?></th>
+												<td>
+													<label class="existing-connection-toggle">
+														<input type="checkbox" name="<?php echo esc_attr( $field_existing ); ?>" id="<?php echo esc_attr( $field_existing ); ?>" class="provider-use-existing" data-provider="<?php echo esc_attr( $p_key ); ?>" value="1" autocomplete="off" <?php checked( $use_existing ); ?> />
+														<?php esc_html_e( 'Use existing connection', 'nectar-geo' ); ?>
+													</label>
+													<p class="description"><?php esc_html_e( 'Nectar GEO detected an AI provider already configured on this site via the WordPress AI Client. Reuse it instead of entering a separate API key here.', 'nectar-geo' ); ?></p>
+													<div class="existing-connection-test-row provider-existing-test-<?php echo esc_attr( $p_key ); ?>" style="<?php echo $use_existing ? '' : 'display:none;'; ?>">
+														<button type="button" class="button button-secondary test-existing-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'nectar-geo' ); ?></button>
+														<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>"></span>
+													</div>
+												</td>
+											</tr>
+										<?php endif; ?>
+										<tr class="provider-key-row provider-row-<?php echo esc_attr( $p_key ); ?> provider-manual-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style . $manual_style ); ?>">
 											<th scope="row"><label for="<?php echo esc_attr( $field_key ); ?>"><?php echo esc_html( $p_cfg['label'] ); ?></label></th>
 											<td>
 												<div class="api-input-row">
 													<input name="<?php echo esc_attr( $field_key ); ?>" type="password" id="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $p_cfg['key_val'] ); ?>" class="regular-text provider-api-key" data-provider="<?php echo esc_attr( $p_key ); ?>" placeholder="<?php echo esc_attr( $p_cfg['placeholder'] ); ?>" aria-label="<?php echo esc_attr( $p_cfg['label'] ); ?>" />
 													<button type="button" class="button button-secondary test-conn-btn" data-provider="<?php echo esc_attr( $p_key ); ?>"><?php esc_html_e( 'Test Connection', 'nectar-geo' ); ?></button>
 												</div>
-												<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>"></span>
+												<span class="conn-feedback test-conn-feedback-<?php echo esc_attr( $p_key ); ?>" <?php echo $p_cfg['has_existing'] ? 'style="display:none;"' : ''; ?>></span>
 												<p class="description">
 													<?php
 													echo wp_kses(
@@ -892,7 +925,7 @@ class Nectar_GEO_Admin {
 												</p>
 											</td>
 										</tr>
-										<tr class="provider-model-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $row_style ); ?>">
+										<tr class="provider-model-row provider-row-<?php echo esc_attr( $p_key ); ?>" style="<?php echo esc_attr( $model_style ); ?>">
 											<th scope="row"><label for="<?php echo esc_attr( $field_model ); ?>"><?php esc_html_e( 'Model', 'nectar-geo' ); ?></label></th>
 											<td>
 												<select name="<?php echo esc_attr( $field_model ); ?>" id="<?php echo esc_attr( $field_model ); ?>" class="regular-text">

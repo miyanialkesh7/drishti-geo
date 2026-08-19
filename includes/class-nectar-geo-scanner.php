@@ -55,16 +55,78 @@ class Nectar_GEO_Scanner {
 	private string $keywords;
 
 	/**
+	 * Whether the active provider is configured to reuse an existing WordPress AI Client
+	 * connection instead of Nectar GEO's own stored API key.
+	 *
+	 * @var bool
+	 */
+	private bool $use_existing;
+
+	/**
+	 * Maps Nectar GEO provider slugs to WordPress AI Client provider IDs.
+	 * Only providers with an official WordPress AI Client implementation are listed here;
+	 * OpenRouter and Perplexity have no AI Client provider and always use a manual key.
+	 *
+	 * @var array<string,string>
+	 */
+	private const AI_CLIENT_PROVIDER_MAP = array(
+		'openai'    => 'openai',
+		'anthropic' => 'anthropic',
+		'gemini'    => 'google',
+	);
+
+	/**
 	 * Constructor — loads active provider, key, and model from DB.
 	 */
 	public function __construct() {
-		$this->provider   = get_option( 'nectar_geo_api_provider', 'openrouter' );
-		$key_option       = 'nectar_geo_' . sanitize_key( $this->provider ) . '_key';
-		$model_option     = 'nectar_geo_' . sanitize_key( $this->provider ) . '_model';
-		$this->api_key    = get_option( $key_option, '' );
-		$this->model      = get_option( $model_option, '' );
-		$this->brand_name = get_option( 'nectar_geo_brand_name', '' );
-		$this->keywords   = get_option( 'nectar_geo_keywords', '' );
+		$this->provider      = get_option( 'nectar_geo_api_provider', 'openrouter' );
+		$key_option          = 'nectar_geo_' . sanitize_key( $this->provider ) . '_key';
+		$model_option        = 'nectar_geo_' . sanitize_key( $this->provider ) . '_model';
+		$use_existing_option = 'nectar_geo_' . sanitize_key( $this->provider ) . '_use_existing';
+		$this->api_key       = get_option( $key_option, '' );
+		$this->model         = get_option( $model_option, '' );
+		$this->brand_name    = get_option( 'nectar_geo_brand_name', '' );
+		$this->keywords      = get_option( 'nectar_geo_keywords', '' );
+		$this->use_existing  = ( '1' === get_option( $use_existing_option, '0' ) ) && self::has_existing_connection( $this->provider );
+	}
+
+	/**
+	 * Whether the given Nectar GEO provider has a matching, already-configured WordPress AI
+	 * Client connection (e.g. registered by "AI Provider for OpenAI/Anthropic/Google") that
+	 * Nectar GEO can reuse instead of asking the user for a separate API key.
+	 *
+	 * @param string $provider Nectar GEO provider slug.
+	 * @return bool
+	 */
+	public static function has_existing_connection( string $provider ): bool {
+		if ( ! isset( self::AI_CLIENT_PROVIDER_MAP[ $provider ] ) || ! class_exists( '\WordPress\AiClient\AiClient' ) ) {
+			return false;
+		}
+
+		try {
+			return (bool) \WordPress\AiClient\AiClient::isConfigured( self::AI_CLIENT_PROVIDER_MAP[ $provider ] );
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Smoke-test the existing WordPress AI Client connection for the given provider.
+	 *
+	 * @param string $provider Nectar GEO provider slug.
+	 * @return true|WP_Error
+	 */
+	public function test_existing_connection( string $provider ) {
+		if ( ! self::has_existing_connection( $provider ) ) {
+			return new WP_Error( 'no_existing_connection', __( 'No configured WordPress AI Client connection was found for this provider.', 'nectar-geo' ) );
+		}
+
+		try {
+			\WordPress\AiClient\AiClient::prompt( 'Hello' )->withProvider( self::AI_CLIENT_PROVIDER_MAP[ $provider ] )->generateText();
+			return true;
+		} catch ( \Throwable $e ) {
+			return new WP_Error( 'api_error', $e->getMessage() );
+		}
 	}
 
 	/**
@@ -412,12 +474,16 @@ class Nectar_GEO_Scanner {
 	 * @return array|WP_Error
 	 */
 	public function run_scan_for_engine( string $engine_id ) {
+		$prompt = $this->get_scan_prompt();
+
+		if ( $this->use_existing ) {
+			return $this->scan_via_ai_client( $prompt );
+		}
+
 		if ( empty( $this->api_key ) ) {
 			/* translators: %s provider label */
 			return new WP_Error( 'missing_key', __( 'API key is not configured. Please add your key in the Configuration tab.', 'nectar-geo' ) );
 		}
-
-		$prompt = $this->get_scan_prompt();
 
 		switch ( $this->provider ) {
 			case 'openai':
@@ -431,6 +497,29 @@ class Nectar_GEO_Scanner {
 			default: // openrouter.
 				return $this->scan_via_openrouter( $engine_id, $prompt );
 		}
+	}
+
+	/**
+	 * Run the scan prompt through a reused WordPress AI Client connection, instead of
+	 * Nectar GEO's own stored API key.
+	 *
+	 * @param string $prompt Fully assembled scan prompt.
+	 * @return array|WP_Error
+	 */
+	private function scan_via_ai_client( string $prompt ) {
+		if ( ! isset( self::AI_CLIENT_PROVIDER_MAP[ $this->provider ] ) ) {
+			return new WP_Error( 'no_existing_connection', __( 'No existing AI Client connection is available for this provider.', 'nectar-geo' ) );
+		}
+
+		try {
+			$text = \WordPress\AiClient\AiClient::prompt( $prompt )
+				->withProvider( self::AI_CLIENT_PROVIDER_MAP[ $this->provider ] )
+				->generateText();
+		} catch ( \Throwable $e ) {
+			return new WP_Error( 'api_error', $e->getMessage() );
+		}
+
+		return $this->extract_mentioned_and_transcript( (string) $text );
 	}
 
 	// ---- Provider-specific scan executors ----

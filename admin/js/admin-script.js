@@ -83,6 +83,70 @@
 			jQuery('.provider-key-row, .provider-model-row').hide();
 			// Show rows matching selected provider
 			jQuery('.provider-row-' + selected).show();
+			// Re-apply "use existing connection" hide/show state for the newly shown provider
+			applyExistingConnectionState(selected);
+		});
+
+		/* ========================================================
+		 * EXISTING CONNECTION TOGGLE (per-provider)
+		 * ======================================================== */
+		function applyExistingConnectionState(provider) {
+			var checked = jQuery('#' + provider + '_use_existing').is(':checked');
+			jQuery('.provider-manual-' + provider).toggle(!checked);
+			jQuery('.provider-model-row.provider-row-' + provider).toggle(!checked);
+			jQuery('.provider-existing-test-' + provider).toggle(checked);
+		}
+
+		$dashboard.on('change', '.provider-use-existing', function() {
+			applyExistingConnectionState(jQuery(this).data('provider'));
+		});
+
+		// Re-sync on load: browsers restore a checkbox's checked state from history/bfcache
+		// on reload independently of the server-rendered HTML, so the hide/show state must
+		// be re-derived from the checkbox's actual DOM state rather than trusted from markup alone.
+		// Only the currently active provider's rows are visible at all, so only that one needs syncing.
+		applyExistingConnectionState(jQuery('#api_provider').val());
+
+		function runConnectionTest(data, $btn, $feedback) {
+			$feedback.removeClass('success error').text('');
+			$btn.prop('disabled', true).text(i18n.testing);
+
+			jQuery.ajax({
+				url: nectarGeoData.ajax_url,
+				type: 'POST',
+				dataType: 'json',
+				data: data,
+				success: function(response) {
+					if (response.success) {
+						$feedback.addClass('success').text(response.data.message);
+						showNotice(response.data.message, 'success');
+					} else {
+						$feedback.addClass('error').text(response.data.message);
+						showNotice(response.data.message, 'error');
+					}
+				},
+				error: function() {
+					$feedback.addClass('error').text(i18n.networkError);
+					showNotice(i18n.networkError, 'error');
+				},
+				complete: function() {
+					$btn.prop('disabled', false).text(i18n.testConnection);
+				}
+			});
+		}
+
+		$dashboard.on('click', '.test-existing-conn-btn', function(e) {
+			e.preventDefault();
+			var $btn      = jQuery(this);
+			var provider  = $btn.data('provider');
+			var $feedback = jQuery('.test-conn-feedback-' + provider);
+
+			runConnectionTest({
+				action: 'nectar_geo_test_connection',
+				nonce: nectarGeoData.nonce,
+				provider: provider,
+				use_existing: 1
+			}, $btn, $feedback);
 		});
 
 		/* ========================================================
@@ -103,36 +167,13 @@
 				return;
 			}
 
-			$btn.prop('disabled', true).text(i18n.testing);
-
-			jQuery.ajax({
-				url: nectarGeoData.ajax_url,
-				type: 'POST',
-				dataType: 'json',
-				data: {
-					action: 'nectar_geo_test_connection',
-					nonce: nectarGeoData.nonce,
-					api_key: apiKey,
-					provider: provider,
-					model: model || ''
-				},
-				success: function(response) {
-					if (response.success) {
-						$feedback.addClass('success').text(response.data.message);
-						showNotice(response.data.message, 'success');
-					} else {
-						$feedback.addClass('error').text(response.data.message);
-						showNotice(response.data.message, 'error');
-					}
-				},
-				error: function() {
-					$feedback.addClass('error').text(i18n.networkError);
-					showNotice(i18n.networkError, 'error');
-				},
-				complete: function() {
-					$btn.prop('disabled', false).text(i18n.testConnection);
-				}
-			});
+			runConnectionTest({
+				action: 'nectar_geo_test_connection',
+				nonce: nectarGeoData.nonce,
+				api_key: apiKey,
+				provider: provider,
+				model: model || ''
+			}, $btn, $feedback);
 		});
 
 		/* ========================================================
