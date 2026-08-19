@@ -22,6 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+
 // Define Constants.
 define( 'NECTAR_GEO_VERSION', '1.0.0' );
 define( 'NECTAR_GEO_PATH', plugin_dir_path( __FILE__ ) );
