@@ -8,6 +8,11 @@
 
 declare(strict_types=1);
 
+// Restrict direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 // Only execute on uninstall context.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;

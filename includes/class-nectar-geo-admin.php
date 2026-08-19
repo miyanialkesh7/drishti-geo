@@ -486,7 +486,7 @@ class Nectar_GEO_Admin {
 		$provider_keys = array( 'openrouter', 'openai', 'gemini', 'perplexity', 'anthropic' );
 		foreach ( $provider_keys as $p ) {
 			$field = $p . '_key';
-			if ( isset( $_POST[ $field ] ) ) {
+			if ( isset( $_POST[ $field ] ) && is_string( $_POST[ $field ] ) ) {
 				update_option( 'nectar_geo_' . $p . '_key', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
@@ -494,7 +494,7 @@ class Nectar_GEO_Admin {
 		// Per-provider models.
 		foreach ( $provider_keys as $p ) {
 			$field = $p . '_model';
-			if ( isset( $_POST[ $field ] ) ) {
+			if ( isset( $_POST[ $field ] ) && is_string( $_POST[ $field ] ) ) {
 				update_option( 'nectar_geo_' . $p . '_model', sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
@@ -504,12 +504,8 @@ class Nectar_GEO_Admin {
 
 		// PRG pattern: redirect back to the settings tab instead of re-rendering inline,
 		// so a page refresh never triggers a "confirm form resubmission" resave.
-		wp_safe_redirect(
-			add_query_arg(
-				array( 'nectar_geo_updated' => '1' ),
-				admin_url( 'admin.php?page=nectar-geo' )
-			) . '#tab-settings'
-		);
+		$nectar_geo_redirect_url = add_query_arg( array( 'nectar_geo_updated' => '1' ), admin_url( 'admin.php?page=nectar-geo' ) ) . '#tab-settings';
+		wp_safe_redirect( $nectar_geo_redirect_url );
 		exit;
 	}
 
@@ -519,7 +515,8 @@ class Nectar_GEO_Admin {
 	public function render_dashboard(): void {
 		// Show a success notice after the PRG redirect from handle_settings_save().
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display flag, no data is processed or saved here.
-		if ( isset( $_GET['nectar_geo_updated'] ) && '1' === $_GET['nectar_geo_updated'] ) {
+		$nectar_geo_updated_flag = isset( $_GET['nectar_geo_updated'] ) ? sanitize_text_field( wp_unslash( $_GET['nectar_geo_updated'] ) ) : '';
+		if ( '1' === $nectar_geo_updated_flag ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully!', 'nectar-geo' ) . '</p></div>';
 		}
 
