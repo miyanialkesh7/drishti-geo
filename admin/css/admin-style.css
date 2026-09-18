@@ -1,11 +1,11 @@
 /*
- * Nectar GEO - Admin Dashboard Stylesheet
- * Scoped to #nectar-geo-dashboard to prevent conflicts with WordPress default admin styles.
+ * Drishti GEO - Admin Dashboard Stylesheet
+ * Scoped to #drishti-geo-dashboard to prevent conflicts with WordPress default admin styles.
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono&display=swap');
 
-#nectar-geo-dashboard {
+#drishti-geo-dashboard {
 	--purple-500: #818cf8;
 	--purple-600: #6366f1;
 	--purple-700: #4f46e5;

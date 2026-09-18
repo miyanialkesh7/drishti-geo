@@ -1,9 +1,9 @@
 <?php
 /**
- * Uninstall Nectar GEO
+ * Uninstall Drishti GEO
  * Runs when the plugin is deleted from the WP admin. Cleans up all options.
  *
- * @package Nectar_GEO
+ * @package Drishti_GEO
  */
 
 declare(strict_types=1);
@@ -19,32 +19,32 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 // Remove all plugin options.
-$nectar_geo_options = array(
-	'nectar_geo_brand_name',
-	'nectar_geo_keywords',
-	'nectar_geo_api_provider',
-	'nectar_geo_openrouter_key',
-	'nectar_geo_openai_key',
-	'nectar_geo_gemini_key',
-	'nectar_geo_perplexity_key',
-	'nectar_geo_anthropic_key',
-	'nectar_geo_openrouter_model',
-	'nectar_geo_openai_model',
-	'nectar_geo_gemini_model',
-	'nectar_geo_perplexity_model',
-	'nectar_geo_anthropic_model',
-	'nectar_geo_daily_scan',
-	'nectar_geo_scan_results',
-	'nectar_geo_checklist_results',
-	'nectar_geo_last_scan_time',
+$drishti_geo_options = array(
+	'drishti_geo_brand_name',
+	'drishti_geo_keywords',
+	'drishti_geo_api_provider',
+	'drishti_geo_openrouter_key',
+	'drishti_geo_openai_key',
+	'drishti_geo_gemini_key',
+	'drishti_geo_perplexity_key',
+	'drishti_geo_anthropic_key',
+	'drishti_geo_openrouter_model',
+	'drishti_geo_openai_model',
+	'drishti_geo_gemini_model',
+	'drishti_geo_perplexity_model',
+	'drishti_geo_anthropic_model',
+	'drishti_geo_daily_scan',
+	'drishti_geo_scan_results',
+	'drishti_geo_checklist_results',
+	'drishti_geo_last_scan_time',
 );
 
-foreach ( $nectar_geo_options as $nectar_geo_option ) {
-	delete_option( $nectar_geo_option );
+foreach ( $drishti_geo_options as $drishti_geo_option ) {
+	delete_option( $drishti_geo_option );
 }
 
 // Clear scheduled cron event.
-$nectar_geo_cron_timestamp = wp_next_scheduled( 'nectar_geo_daily_scan_cron' );
-if ( $nectar_geo_cron_timestamp ) {
-	wp_unschedule_event( $nectar_geo_cron_timestamp, 'nectar_geo_daily_scan_cron' );
+$drishti_geo_cron_timestamp = wp_next_scheduled( 'drishti_geo_daily_scan_cron' );
+if ( $drishti_geo_cron_timestamp ) {
+	wp_unschedule_event( $drishti_geo_cron_timestamp, 'drishti_geo_daily_scan_cron' );
 }

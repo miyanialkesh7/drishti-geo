@@ -1,5 +1,5 @@
 /**
- * Nectar GEO - Admin Dashboard Scripts
+ * Drishti GEO - Admin Dashboard Scripts
  * Handles AJAX requests, UI state changes, engine scans, and modals.
  */
 
@@ -15,13 +15,13 @@
 
 		// ---- Inline notice helper (replaces alert()) ----
 		function showNotice( msg, type ) {
-			var $notice = jQuery('<div class="notice notice-' + ( type || 'error' ) + ' is-dismissible nectar-geo-inline-notice"><p>' + msg + '</p></div>');
+			var $notice = jQuery('<div class="notice notice-' + ( type || 'error' ) + ' is-dismissible drishti-geo-inline-notice"><p>' + msg + '</p></div>');
 			jQuery('.wrap h1').first().after( $notice);
 			setTimeout(function() { $notice.fadeOut(400, function() { jQuery(this).remove(); }); }, 5000);
 		}
 
 		// Elements Cache
-		var $dashboard = jQuery('#nectar-geo-dashboard');
+		var $dashboard = jQuery('#drishti-geo-dashboard');
 		if (!$dashboard.length) return;
 
 		var $tabs = $dashboard.find('.custom-tabs .nav-tab');
@@ -36,8 +36,8 @@
 		var $modalEngineBadge = jQuery('#modal-engine-badge');
 		var $modalContent = jQuery('#modal-transcript-content');
 		
-		var engines = nectarGeoData.engines; // ['openai', 'gemini', 'perplexity', 'claude', 'siri']
-		var i18n = nectarGeoData.i18n;
+		var engines = drishtiGeoData.engines; // ['openai', 'gemini', 'perplexity', 'claude', 'siri']
+		var i18n = drishtiGeoData.i18n;
 		var scanResults = {};
 
 		/* ========================================================
@@ -112,7 +112,7 @@
 			$btn.prop('disabled', true).text(i18n.testing);
 
 			jQuery.ajax({
-				url: nectarGeoData.ajax_url,
+				url: drishtiGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: data,
@@ -142,8 +142,8 @@
 			var $feedback = jQuery('.test-conn-feedback-' + provider);
 
 			runConnectionTest({
-				action: 'nectar_geo_test_connection',
-				nonce: nectarGeoData.nonce,
+				action: 'drishti_geo_test_connection',
+				nonce: drishtiGeoData.nonce,
 				provider: provider,
 				use_existing: 1
 			}, $btn, $feedback);
@@ -168,8 +168,8 @@
 			}
 
 			runConnectionTest({
-				action: 'nectar_geo_test_connection',
-				nonce: nectarGeoData.nonce,
+				action: 'drishti_geo_test_connection',
+				nonce: drishtiGeoData.nonce,
 				api_key: apiKey,
 				provider: provider,
 				model: model || ''
@@ -184,12 +184,12 @@
 			$autofixRobotsBtn.prop('disabled', true).text(i18n.fixing);
 
 			jQuery.ajax({
-				url: nectarGeoData.ajax_url,
+				url: drishtiGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'nectar_geo_autofix_robots',
-					nonce: nectarGeoData.nonce
+					action: 'drishti_geo_autofix_robots',
+					nonce: drishtiGeoData.nonce
 				},
 				success: function(response) {
 					if (response.success) {
@@ -218,12 +218,12 @@
 			$generateAitxtBtn.prop('disabled', true).text(i18n.generating);
 
 			jQuery.ajax({
-				url: nectarGeoData.ajax_url,
+				url: drishtiGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'nectar_geo_generate_aitxt',
-					nonce: nectarGeoData.nonce
+					action: 'drishti_geo_generate_aitxt',
+					nonce: drishtiGeoData.nonce
 				},
 				success: function(response) {
 					if (response.success) {
@@ -262,7 +262,7 @@
 					.attr('data-has-data', 'no');
 				
 				card.find('.engine-status-tag').html('<span class="tag tag-gray"><span class="pulse-dot"></span> ' + i18n.scanning + '</span>');
-				card.find('.transcript-preview').text(formatString(i18n.queryingModelVia, nectarGeoData.active_provider_label));
+				card.find('.transcript-preview').text(formatString(i18n.queryingModelVia, drishtiGeoData.active_provider_label));
 				card.find('.view-transcript-btn').prop('disabled', true);
 				card.find('.hidden-transcript').text('');
 			});
@@ -282,12 +282,12 @@
 			var card = jQuery('.engine-card[data-engine="' + engineId + '"]');
 
 			jQuery.ajax({
-				url: nectarGeoData.ajax_url,
+				url: drishtiGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'nectar_geo_run_engine_scan',
-					nonce: nectarGeoData.nonce,
+					action: 'drishti_geo_run_engine_scan',
+					nonce: drishtiGeoData.nonce,
 					engine_id: engineId
 				},
 				success: function(response) {
@@ -353,12 +353,12 @@
 			$runScanBtn.html('<span class="dashicons dashicons-update spin"></span> ' + i18n.rebuildingScore);
 
 			jQuery.ajax({
-				url: nectarGeoData.ajax_url,
+				url: drishtiGeoData.ajax_url,
 				type: 'POST',
 				dataType: 'json',
 				data: {
-					action: 'nectar_geo_save_scan_results',
-					nonce: nectarGeoData.nonce,
+					action: 'drishti_geo_save_scan_results',
+					nonce: drishtiGeoData.nonce,
 					results: scanResults
 				},
 				success: function(response) {
