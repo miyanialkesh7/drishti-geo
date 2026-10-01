@@ -29,7 +29,27 @@ Features include:
 
 == Frequently Asked Questions ==
 = Do I need an API key to use this plugin? =
-Yes. You can select one of the supported providers (OpenAI, Gemini, Perplexity, Anthropic) or use an aggregator like OpenRouter to access multiple models with a single key.
+Yes. You can select one of the supported providers (OpenAI, Gemini, Perplexity, Anthropic) or use an aggregator like OpenRouter to access multiple models with a single key. Alternatively, if another plugin has already configured a WordPress AI Client connection for OpenAI, Anthropic, or Google, Drishti GEO can reuse that connection instead of a separate key.
+
+== External services ==
+This plugin relies on external AI provider APIs to check whether AI engines mention your brand, and to power the "Test Connection" and "9-Point Deep Dive" features. Only one provider is contacted per request, based on the provider you select in the Configuration tab (or, if you enable "Use existing connection", the same underlying provider via an existing WordPress AI Client connection).
+
+The data sent to whichever provider is active is limited to: the brand name and target keywords you enter in the Configuration tab (used to build the scan question sent to the AI model), and, for the connection test, the fixed word "Hello". No visitor data or personal information is sent. Requests are sent to the provider's API only when you click "Test Connection" or "Run AI Scan" in the admin dashboard, or automatically once every 24 hours if you enable the "Daily Auto-Scan" option.
+
+* **OpenAI** — used for AI visibility scans and connection testing when OpenAI is the selected provider.
+[Terms of use](https://openai.com/policies/terms-of-use), [Privacy policy](https://openai.com/policies/privacy-policy)
+
+* **Google Gemini** — used for AI visibility scans and connection testing when Gemini is the selected provider.
+[Gemini API additional terms](https://ai.google.dev/gemini-api/terms), [Google privacy policy](https://policies.google.com/privacy)
+
+* **Anthropic (Claude)** — used for AI visibility scans and connection testing when Anthropic is the selected provider.
+[Terms of service](https://www.anthropic.com/legal/consumer-terms), [Privacy policy](https://www.anthropic.com/legal/privacy)
+
+* **Perplexity AI** — used for AI visibility scans and connection testing when Perplexity is the selected provider.
+[Terms of service](https://perplexity.ai/hub/legal/terms-of-service), [Privacy policy](https://www.perplexity.ai/hub/legal/privacy-policy)
+
+* **OpenRouter** — an aggregator used for AI visibility scans and connection testing when OpenRouter is the selected provider, routing the request to the OpenAI/Google/Anthropic model you pick from its catalog.
+[Terms of service](https://openrouter.ai/terms), [Privacy policy](https://openrouter.ai/privacy)
 
 == Changelog ==
 = 1.0.0 =

@@ -271,6 +271,10 @@
 			runEngineScanQueue(0);
 		});
 
+		// Delay between sequential engine scan requests, to stay clear of
+		// provider per-minute rate limits when all engines share one API key.
+		var SCAN_QUEUE_DELAY_MS = 1500;
+
 		function runEngineScanQueue(index) {
 			if (index >= engines.length) {
 				// Scan sequence complete, now save results and compute checklist
@@ -322,8 +326,11 @@
 					});
 					jQuery('#total-mentions-ratio').text(mentions);
 
-					// Recurse to next engine
-					runEngineScanQueue(index + 1);
+					// Recurse to next engine, staggered to avoid bursting
+					// the provider's per-minute rate limit.
+					setTimeout(function() {
+						runEngineScanQueue(index + 1);
+					}, SCAN_QUEUE_DELAY_MS);
 				}
 			});
 		}

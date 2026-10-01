@@ -121,12 +121,57 @@ class Drishti_GEO_Scanner {
 			return new WP_Error( 'no_existing_connection', __( 'No configured WordPress AI Client connection was found for this provider.', 'drishti-geo' ) );
 		}
 
-		try {
-			\WordPress\AiClient\AiClient::prompt( 'Hello' )->withProvider( self::AI_CLIENT_PROVIDER_MAP[ $provider ] )->generateText();
-			return true;
-		} catch ( \Throwable $e ) {
-			return new WP_Error( 'api_error', $e->getMessage() );
+		$model  = get_option( 'drishti_geo_' . sanitize_key( $provider ) . '_model', '' );
+		$result = $this->ai_client_generate_text( $provider, 'Hello', $model );
+
+		return is_wp_error( $result ) ? $result : true;
+	}
+
+	/**
+	 * Generate text through the WordPress AI Client for the given provider.
+	 *
+	 * Steers model selection toward the configured model (or a lightweight default) instead of
+	 * letting the AI Client auto-pick, and retries briefly on transient overload errors (429/503).
+	 *
+	 * @param string $provider Drishti GEO provider slug.
+	 * @param string $prompt   Prompt text.
+	 * @param string $model    Preferred model ID (optional).
+	 * @return string|WP_Error
+	 */
+	private function ai_client_generate_text( string $provider, string $prompt, string $model = '' ) {
+		$preferences = array_values(
+			array_unique(
+				array_filter(
+					array( $model, $this->get_test_model( $provider, '' ) ),
+					static function ( $id ) {
+						return '' !== $id && 'default' !== $id;
+					}
+				)
+			)
+		);
+
+		$max_attempts = 3;
+		for ( $attempt = 1; $attempt <= $max_attempts; $attempt++ ) {
+			try {
+				return (string) \WordPress\AiClient\AiClient::prompt( $prompt )
+					->usingProvider( self::AI_CLIENT_PROVIDER_MAP[ $provider ] )
+					->usingModelPreference( ...$preferences )
+					// The raw SDK builder falls back to the 5s WP HTTP default; scans need longer.
+					->usingRequestOptions( \WordPress\AiClient\Providers\Http\DTO\RequestOptions::fromArray( array( 'timeout' => 60.0 ) ) )
+					->generateText();
+			} catch ( \Throwable $e ) {
+				$is_transient = in_array( (int) $e->getCode(), array( 429, 503 ), true )
+					|| preg_match( '/\b(429|503)\b|high demand|overloaded|unavailable/i', $e->getMessage() );
+
+				if ( ! $is_transient || $attempt === $max_attempts ) {
+					return new WP_Error( 'api_error', $e->getMessage() );
+				}
+
+				sleep( $attempt ); // 1s, then 2s.
+			}
 		}
+
+		return new WP_Error( 'api_error', __( 'The AI provider did not respond.', 'drishti-geo' ) );
 	}
 
 	/**
@@ -138,33 +183,48 @@ class Drishti_GEO_Scanner {
 	public static function get_provider_models( string $provider ): array {
 		$map = array(
 			'openrouter' => array(
-				'default'                     => __( 'Default (engine-specific models)', 'drishti-geo' ),
-				'google/gemini-2.5-flash'     => __( 'Gemini 2.5 Flash', 'drishti-geo' ),
-				'google/gemini-2.5-pro'       => __( 'Gemini 2.5 Pro', 'drishti-geo' ),
-				'openai/gpt-4o'               => __( 'GPT-4o', 'drishti-geo' ),
-				'openai/gpt-4o-mini'          => __( 'GPT-4o Mini', 'drishti-geo' ),
-				'anthropic/claude-3.5-sonnet' => __( 'Claude 3.5 Sonnet', 'drishti-geo' ),
-				'perplexity/llama-3.1-sonar-large-128k-online' => __( 'Perplexity Sonar Large', 'drishti-geo' ),
+				'default'                       => __( 'Default (engine-specific models)', 'drishti-geo' ),
+				'openai/gpt-6-sol'              => __( 'GPT-6 Sol', 'drishti-geo' ),
+				'openai/gpt-6-luna'             => __( 'GPT-6 Luna', 'drishti-geo' ),
+				'openai/gpt-6-astra'            => __( 'GPT-6 Astra', 'drishti-geo' ),
+				'google/gemini-3.8-flash'       => __( 'Gemini 3.8 Flash', 'drishti-geo' ),
+				'google/gemini-3.5-flash-lite'  => __( 'Gemini 3.5 Flash-Lite', 'drishti-geo' ),
+				'google/gemini-3.1-pro-preview' => __( 'Gemini 3.1 Pro (preview)', 'drishti-geo' ),
+				'anthropic/claude-opus-5'       => __( 'Claude Opus 5', 'drishti-geo' ),
+				'anthropic/claude-fable-5.1'    => __( 'Claude Fable 5.1', 'drishti-geo' ),
+				'anthropic/claude-sonnet-5'     => __( 'Claude Sonnet 5', 'drishti-geo' ),
+				'anthropic/claude-haiku-4.5'    => __( 'Claude Haiku 4.5', 'drishti-geo' ),
+				'perplexity/sonar-pro'          => __( 'Perplexity Sonar Pro', 'drishti-geo' ),
+				'perplexity/sonar'              => __( 'Perplexity Sonar', 'drishti-geo' ),
 			),
 			'openai'     => array(
-				'gpt-4o-mini'   => __( 'GPT-4o Mini', 'drishti-geo' ),
-				'gpt-4o'        => __( 'GPT-4o', 'drishti-geo' ),
-				'gpt-3.5-turbo' => __( 'GPT-3.5 Turbo', 'drishti-geo' ),
+				'gpt-6-luna'   => __( 'GPT-6 Luna (fastest, lowest cost)', 'drishti-geo' ),
+				'gpt-6-sol'    => __( 'GPT-6 Sol', 'drishti-geo' ),
+				'gpt-6-astra'  => __( 'GPT-6 Astra (most capable)', 'drishti-geo' ),
+				'gpt-5.6-luna' => __( 'GPT-5.6 Luna', 'drishti-geo' ),
+				'gpt-5.6-sol'  => __( 'GPT-5.6 Sol', 'drishti-geo' ),
+				'gpt-5.5'      => __( 'GPT-5.5', 'drishti-geo' ),
+				'gpt-4o-mini'  => __( 'GPT-4o Mini (legacy)', 'drishti-geo' ),
 			),
 			'gemini'     => array(
-				'gemini-2.5-flash'      => __( 'Gemini 2.5 Flash', 'drishti-geo' ),
-				'gemini-2.5-pro'        => __( 'Gemini 2.5 Pro', 'drishti-geo' ),
-				'gemini-2.0-flash'      => __( 'Gemini 2.0 Flash', 'drishti-geo' ),
-				'gemini-2.0-flash-lite' => __( 'Gemini 2.0 Flash-Lite', 'drishti-geo' ),
+				'gemini-3.5-flash-lite'  => __( 'Gemini 3.5 Flash-Lite (fastest, lowest cost)', 'drishti-geo' ),
+				'gemini-3.8-flash'       => __( 'Gemini 3.8 Flash', 'drishti-geo' ),
+				'gemini-3.7-flash'       => __( 'Gemini 3.7 Flash', 'drishti-geo' ),
+				'gemini-3.6-flash'       => __( 'Gemini 3.6 Flash', 'drishti-geo' ),
+				'gemini-3.5-flash'       => __( 'Gemini 3.5 Flash', 'drishti-geo' ),
+				'gemini-3.1-pro-preview' => __( 'Gemini 3.1 Pro (preview)', 'drishti-geo' ),
+				'gemini-3.1-flash-lite'  => __( 'Gemini 3.1 Flash-Lite', 'drishti-geo' ),
 			),
 			'perplexity' => array(
-				'sonar'           => __( 'Sonar', 'drishti-geo' ),
-				'sonar-reasoning' => __( 'Sonar Reasoning', 'drishti-geo' ),
+				'sonar'               => __( 'Sonar (fastest, lowest cost)', 'drishti-geo' ),
+				'sonar-pro'           => __( 'Sonar Pro', 'drishti-geo' ),
+				'sonar-reasoning-pro' => __( 'Sonar Reasoning Pro', 'drishti-geo' ),
 			),
 			'anthropic'  => array(
-				'claude-3-5-sonnet-20241022' => __( 'Claude 3.5 Sonnet', 'drishti-geo' ),
-				'claude-3-5-haiku-20241022'  => __( 'Claude 3.5 Haiku', 'drishti-geo' ),
-				'claude-3-opus-20240229'     => __( 'Claude 3 Opus', 'drishti-geo' ),
+				'claude-opus-5'    => __( 'Claude Opus 5', 'drishti-geo' ),
+				'claude-fable-5-1' => __( 'Claude Fable 5.1 (most capable)', 'drishti-geo' ),
+				'claude-sonnet-5'  => __( 'Claude Sonnet 5', 'drishti-geo' ),
+				'claude-haiku-4-5' => __( 'Claude Haiku 4.5 (fastest)', 'drishti-geo' ),
 			),
 		);
 		return isset( $map[ $provider ] ) ? $map[ $provider ] : array();
@@ -178,13 +238,13 @@ class Drishti_GEO_Scanner {
 	 */
 	public function get_openrouter_engine_model( string $engine_id ): string {
 		$models = array(
-			'openai'     => 'openai/gpt-4o',
-			'gemini'     => 'google/gemini-2.5-pro',
-			'perplexity' => 'perplexity/llama-3.1-sonar-large-128k-online',
-			'claude'     => 'anthropic/claude-3.5-sonnet',
-			'siri'       => 'google/gemini-2.5-flash',
+			'openai'     => 'openai/gpt-6-sol',
+			'gemini'     => 'google/gemini-3.8-flash',
+			'perplexity' => 'perplexity/sonar-pro',
+			'claude'     => 'anthropic/claude-opus-5',
+			'siri'       => 'google/gemini-3.8-flash',
 		);
-		return isset( $models[ $engine_id ] ) ? $models[ $engine_id ] : 'google/gemini-2.5-flash';
+		return isset( $models[ $engine_id ] ) ? $models[ $engine_id ] : 'google/gemini-3.8-flash';
 	}
 
 	/**
@@ -261,15 +321,15 @@ class Drishti_GEO_Scanner {
 
 		switch ( $provider ) {
 			case 'openai':
-				return 'gpt-3.5-turbo';
+				return 'gpt-6-luna';
 			case 'gemini':
-				return 'gemini-2.0-flash';
+				return 'gemini-3.5-flash-lite';
 			case 'perplexity':
 				return 'sonar';
 			case 'anthropic':
-				return 'claude-3-5-haiku-20241022';
+				return 'claude-haiku-4-5';
 			default:
-				return 'google/gemini-2.5-flash';
+				return 'google/gemini-3.5-flash-lite';
 		}
 	}
 
@@ -282,7 +342,7 @@ class Drishti_GEO_Scanner {
 	 * @param string $model   Model ID to use for the test request.
 	 * @return true|WP_Error
 	 */
-	private function test_openrouter( string $api_key, string $model = 'google/gemini-2.5-flash' ) {
+	private function test_openrouter( string $api_key, string $model = 'google/gemini-3.5-flash-lite' ) {
 		// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration
 		$url     = 'https://openrouter.ai/api/v1/chat/completions';
 		$body    = wp_json_encode(
@@ -516,15 +576,12 @@ class Drishti_GEO_Scanner {
 			return new WP_Error( 'no_existing_connection', __( 'No existing AI Client connection is available for this provider.', 'drishti-geo' ) );
 		}
 
-		try {
-			$text = \WordPress\AiClient\AiClient::prompt( $prompt )
-				->withProvider( self::AI_CLIENT_PROVIDER_MAP[ $this->provider ] )
-				->generateText();
-		} catch ( \Throwable $e ) {
-			return new WP_Error( 'api_error', $e->getMessage() );
+		$text = $this->ai_client_generate_text( $this->provider, $prompt, $this->model );
+		if ( is_wp_error( $text ) ) {
+			return $text;
 		}
 
-		return $this->extract_mentioned_and_transcript( (string) $text );
+		return $this->extract_mentioned_and_transcript( $text );
 	}
 
 	// ---- Provider-specific scan executors ----
@@ -578,7 +635,7 @@ class Drishti_GEO_Scanner {
 		$url     = 'https://api.openai.com/v1/chat/completions';
 		$body    = wp_json_encode(
 			array(
-				'model'           => ! empty( $this->model ) ? $this->model : 'gpt-4o-mini',
+				'model'           => ! empty( $this->model ) ? $this->model : 'gpt-6-luna',
 				'messages'        => array(
 					array(
 						'role'    => 'user',
@@ -606,7 +663,7 @@ class Drishti_GEO_Scanner {
 	 * @return array|WP_Error
 	 */
 	private function scan_via_gemini( string $prompt ) {
-		$model   = ! empty( $this->model ) ? $this->model : 'gemini-2.5-flash';
+		$model = ! empty( $this->model ) ? $this->model : 'gemini-3.5-flash-lite';
 		// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration
 		$url     = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent?key=' . rawurlencode( trim( $this->api_key ) );
 		$body    = wp_json_encode(
@@ -668,8 +725,9 @@ class Drishti_GEO_Scanner {
 		$url     = 'https://api.anthropic.com/v1/messages';
 		$body    = wp_json_encode(
 			array(
-				'model'      => ! empty( $this->model ) ? $this->model : 'claude-3-5-sonnet-20241022',
-				'max_tokens' => 1024,
+				'model'      => ! empty( $this->model ) ? $this->model : 'claude-opus-5',
+				// Opus 5 / Fable 5.1 think by default, and thinking tokens count toward this cap.
+				'max_tokens' => 16000,
 				'messages'   => array(
 					array(
 						'role'    => 'user',
@@ -762,10 +820,22 @@ class Drishti_GEO_Scanner {
 	 */
 	private function parse_anthropic_response( string $body ) {
 		$data = json_decode( $body, true );
-		if ( ! isset( $data['content'][0]['text'] ) ) {
+
+		if ( isset( $data['stop_reason'] ) && 'refusal' === $data['stop_reason'] ) {
+			return new WP_Error( 'refusal', __( 'Anthropic declined to answer this scan prompt.', 'drishti-geo' ) );
+		}
+
+		// Newer models may return thinking blocks before the text block, so find the text.
+		$content = '';
+		foreach ( (array) ( $data['content'] ?? array() ) as $block ) {
+			if ( isset( $block['type'], $block['text'] ) && 'text' === $block['type'] ) {
+				$content .= $block['text'];
+			}
+		}
+
+		if ( '' === $content ) {
 			return new WP_Error( 'invalid_response', __( 'Invalid response format from Anthropic API.', 'drishti-geo' ) );
 		}
-		$content = $data['content'][0]['text'];
 		return $this->extract_mentioned_and_transcript( $content );
 	}
 

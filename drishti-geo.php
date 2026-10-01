@@ -5,7 +5,6 @@
  * Description: Tracks website and brand visibility across major AI engines (ChatGPT, Gemini, Perplexity, Claude, Siri) using your choice of API provider (OpenRouter, OpenAI, Gemini, Perplexity, Anthropic), featuring a native robots.txt blocker alert and an automated ai.txt generator.
  * Version: 1.0.0
  * Requires at least: 5.8
- * Tested up to: 7.1
  * Requires PHP: 7.4
  * Author: Techeshta
  * Author URI: https://www.techeshta.com
@@ -53,10 +52,10 @@ function drishti_geo_activate(): void {
 
 	// Per-provider selected models.
 	add_option( 'drishti_geo_openrouter_model', 'default' );
-	add_option( 'drishti_geo_openai_model', 'gpt-4o-mini' );
-	add_option( 'drishti_geo_gemini_model', 'gemini-2.5-flash' );
+	add_option( 'drishti_geo_openai_model', 'gpt-6-luna' );
+	add_option( 'drishti_geo_gemini_model', 'gemini-3.5-flash-lite' );
 	add_option( 'drishti_geo_perplexity_model', 'sonar' );
-	add_option( 'drishti_geo_anthropic_model', 'claude-3-5-sonnet-20241022' );
+	add_option( 'drishti_geo_anthropic_model', 'claude-opus-5' );
 
 	add_option( 'drishti_geo_daily_scan', '0' );
 	add_option( 'drishti_geo_scan_results', array() );
@@ -145,3 +144,28 @@ function drishti_geo_init(): void {
 	}
 }
 add_action( 'plugins_loaded', 'drishti_geo_init' );
+
+/**
+ * Serve the generated ai.txt content virtually at /ai.txt, the same way WordPress
+ * core serves a virtual robots.txt. This avoids writing a physical file into
+ * ABSPATH, which is not always the public web root.
+ */
+function drishti_geo_maybe_serve_aitxt(): void {
+	$content = get_option( 'drishti_geo_aitxt_content', '' );
+	if ( ! is_string( $content ) || '' === $content ) {
+		return;
+	}
+
+	$home_path    = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+	$request_uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	$request_path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+
+	if ( rtrim( $home_path, '/' ) . '/ai.txt' !== $request_path ) {
+		return;
+	}
+
+	header( 'Content-Type: text/plain; charset=utf-8' );
+	echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text response generated entirely by this plugin, not HTML.
+	exit;
+}
+add_action( 'template_redirect', 'drishti_geo_maybe_serve_aitxt', 0 );

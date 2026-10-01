@@ -37,6 +37,7 @@ $drishti_geo_options = array(
 	'drishti_geo_scan_results',
 	'drishti_geo_checklist_results',
 	'drishti_geo_last_scan_time',
+	'drishti_geo_aitxt_content',
 );
 
 foreach ( $drishti_geo_options as $drishti_geo_option ) {
