@@ -51,6 +51,9 @@ The data sent to whichever provider is active is limited to: the brand name and 
 * **OpenRouter** — an aggregator used for AI visibility scans and connection testing when OpenRouter is the selected provider, routing the request to the OpenAI/Google/Anthropic model you pick from its catalog.
 [Terms of service](https://openrouter.ai/terms), [Privacy policy](https://openrouter.ai/privacy)
 
+* **Google Fonts** — the Drishti GEO admin dashboard loads the "Outfit" and "Space Mono" typefaces from Google's font CDN. This request is made only when a logged-in administrator views the Drishti GEO settings page, and sends that browser's IP address and user agent to Google. No visitor-facing pages are affected.
+[Google Fonts privacy information](https://developers.google.com/fonts/faq/privacy), [Google privacy policy](https://policies.google.com/privacy)
+
 == Changelog ==
 = 1.0.0 =
 * Initial release.

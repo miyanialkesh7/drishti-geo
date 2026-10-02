@@ -14,9 +14,14 @@
 		}
 
 		// ---- Inline notice helper (replaces alert()) ----
+		// Built via DOM methods (not string-concatenated HTML) because msg can
+		// carry an upstream AI provider's raw error text, which must never be
+		// interpreted as markup.
 		function showNotice( msg, type ) {
-			var $notice = jQuery('<div class="notice notice-' + ( type || 'error' ) + ' is-dismissible drishti-geo-inline-notice"><p>' + msg + '</p></div>');
-			jQuery('.wrap h1').first().after( $notice);
+			var $notice = jQuery('<div class="notice is-dismissible drishti-geo-inline-notice"><p></p></div>')
+				.addClass( 'notice-' + ( type || 'error' ) );
+			$notice.find('p').text( msg );
+			jQuery('.wrap h1').first().after( $notice );
 			setTimeout(function() { $notice.fadeOut(400, function() { jQuery(this).remove(); }); }, 5000);
 		}
 
