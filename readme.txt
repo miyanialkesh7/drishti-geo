@@ -4,8 +4,8 @@ Tags: generative engine optimization, ai visibility, robots.txt, chatgpt, gemini
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
-License: GPLv2 or later
+Stable tag: 1.0.1
+License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Tracks website and brand visibility across major AI engines using your choice of API provider, featuring a native robots.txt blocker alert.
@@ -54,7 +54,18 @@ The data sent to whichever provider is active is limited to: the brand name and 
 * **Google Fonts** — the Drishti GEO admin dashboard loads the "Outfit" and "Space Mono" typefaces from Google's font CDN. This request is made only when a logged-in administrator views the Drishti GEO settings page, and sends that browser's IP address and user agent to Google. No visitor-facing pages are affected.
 [Google Fonts privacy information](https://developers.google.com/fonts/faq/privacy), [Google privacy policy](https://policies.google.com/privacy)
 
+== Screenshots ==
+
+1. Command Center — AI Search Engine Visibility Matrix showing per-engine mention status (OpenAI SearchGPT, Google Gemini, Perplexity AI, Anthropic Claude, Apple Intelligence) alongside the overall AI score and total mentions.
+2. 9-Point GEO Deep Dive — optimization pillars grouped into Technical Foundation, Content Optimization, and Off-Page Trust & Authority, each with a pass/action status and recommendation.
+3. Configuration — brand/entity name, target keywords, multi-provider API setup (with existing-connection reuse), daily auto-scan scheduling, and the ai.txt AI Crawler Safelist generator.
+
 == Changelog ==
+= 1.0.1 =
+Release date: October 3rd, 2026
+
+* [Updated] Latest WordPress 7.1 compatibility check.
+
 = 1.0.0 =
 * Initial release.
 * Multi-provider API support (OpenRouter, OpenAI, Gemini, Perplexity, Anthropic).

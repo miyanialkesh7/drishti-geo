@@ -3,13 +3,15 @@
  * Plugin Name: Drishti GEO - AI Visibility Tracking and Analytics
  * Plugin URI: https://wordpress.org/plugins/drishti-geo/
  * Description: Tracks website and brand visibility across major AI engines (ChatGPT, Gemini, Perplexity, Claude, Siri) using your choice of API provider (OpenRouter, OpenAI, Gemini, Perplexity, Anthropic), featuring a native robots.txt blocker alert and an automated ai.txt generator.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: Techeshta
  * Author URI: https://www.techeshta.com
  * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: drishti-geo
+ * Domain Path: /languages
  *
  * @package Drishti_GEO
  */
@@ -23,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 // Define Constants.
-define( 'DRISHTI_GEO_VERSION', '1.0.0' );
+define( 'DRISHTI_GEO_VERSION', '1.0.1' );
 define( 'DRISHTI_GEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'DRISHTI_GEO_URL', plugin_dir_url( __FILE__ ) );
 define( 'DRISHTI_GEO_BASENAME', plugin_basename( __FILE__ ) );

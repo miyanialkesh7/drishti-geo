@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<ruleset name="Drishti GEO">
+    <description>WordPress Coding Standards for Drishti GEO</description>
+
+    <file>.</file>
+    <exclude-pattern>/vendor/*</exclude-pattern>
+    <exclude-pattern>/tests/*</exclude-pattern>
+    <exclude-pattern>/languages/*</exclude-pattern>
+    <exclude-pattern>/.wordpress-org/*</exclude-pattern>
+    <!-- Dev-only PHPStan stub mirroring a third-party library's own (non-WPCS) API; never loaded by the plugin. -->
+    <exclude-pattern>/phpstan-bootstrap.php</exclude-pattern>
+
+    <arg value="sp"/>
+    <arg name="basepath" value="."/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <config name="minimum_supported_wp_version" value="5.8"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="drishti-geo"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="DRISHTI_GEO"/>
+                <element value="Drishti_GEO"/>
+                <element value="drishti_geo"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

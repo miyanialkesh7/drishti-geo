@@ -1182,7 +1182,8 @@ class Drishti_GEO_Scanner {
 				$pos_matches += substr_count( strtolower( $all_transcripts ), $pos );
 			}
 
-			if ( $neg_matches > $pos_matches && $neg_matches > 0 ) {
+			// $pos_matches is never negative, so a strictly-greater $neg_matches is already > 0.
+			if ( $neg_matches > $pos_matches ) {
 				$sentiment_status = 'action';
 				$sentiment_score  = 0;
 				/* translators: 1: number of negative keyword matches, 2: number of positive keyword matches */

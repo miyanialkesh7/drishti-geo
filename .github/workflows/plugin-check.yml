@@ -1,0 +1,24 @@
+name: Plugin Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin-check:
+    name: WordPress.org Plugin Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Run Plugin Check
+        uses: WordPress/plugin-check-action@v1
+        with:
+          plugin-repo: .
+          build-dir: .
+          exclude-directories: .git,.github,.wordpress-org,tests,vendor,node_modules

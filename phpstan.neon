@@ -1,0 +1,32 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - drishti-geo.php
+        - uninstall.php
+        - includes
+        - admin
+    excludePaths:
+        - vendor/*
+        - tests/*
+    bootstrapFiles:
+        - vendor/szepeviktor/phpstan-wordpress/bootstrap.php
+        - phpstan-bootstrap.php
+    ignoreErrors:
+        -
+            # wp_send_json_error()/wp_send_json_success() are stubbed as never-returning (they
+            # call wp_die()), making the defensive `return;` that follows each one technically
+            # unreachable. The `return;` is kept deliberately in case wp_die() is ever filtered
+            # to not exit (e.g. under PHPUnit), so it is intentional defensive code, not a bug.
+            message: '#^Unreachable statement - code above always terminates\.$#'
+            path: includes/class-drishti-geo-admin.php
+            count: 10
+        -
+            # preg_match_all() can fail (e.g. a PCRE backtrack-limit error on large external
+            # HTML) and leave $h_matches unset; PHPStan's stub return type assumes success, so
+            # it considers this isset() guard always-true. The guard protects a real edge case.
+            message: '#^Offset 1 on array\{array<int, string>, array<int, string>\} in isset\(\) always exists and is not nullable\.$#'
+            path: includes/class-drishti-geo-scanner.php
+            count: 1

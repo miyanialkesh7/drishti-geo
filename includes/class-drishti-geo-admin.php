@@ -640,9 +640,9 @@ class Drishti_GEO_Admin {
 								<div class="circle-container">
 									<svg class="progress-ring" width="120" height="120">
 										<circle class="progress-ring__circle-bg" stroke="#1e293b" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" />
-										<circle class="progress-ring__circle" id="overall-score-circle" stroke="#6366f1" stroke-dasharray="326.7" stroke-dashoffset="<?php echo esc_attr( 326.7 - ( 326.7 * ( $overall_score / 100 ) ) ); ?>" stroke-width="8" stroke-linecap="round" fill="transparent" r="52" cx="60" cy="60" />
+										<circle class="progress-ring__circle" id="overall-score-circle" stroke="#6366f1" stroke-dasharray="326.7" stroke-dashoffset="<?php echo esc_attr( (string) ( 326.7 - ( 326.7 * ( $overall_score / 100 ) ) ) ); ?>" stroke-width="8" stroke-linecap="round" fill="transparent" r="52" cx="60" cy="60" />
 									</svg>
-									<div class="radial-score" id="overall-score-text"><?php echo esc_html( $overall_score ); ?>%</div>
+									<div class="radial-score" id="overall-score-text"><?php echo esc_html( (string) $overall_score ); ?>%</div>
 								</div>
 								<p class="stat-meta"><?php esc_html_e( 'Calculated across the 9 optimization pillars.', 'drishti-geo' ); ?></p>
 							</div>
@@ -653,7 +653,7 @@ class Drishti_GEO_Admin {
 							<div class="card-inner">
 								<h3><?php esc_html_e( 'Total Mentions', 'drishti-geo' ); ?></h3>
 								<div class="mentions-display">
-									<span class="mention-ratio" id="total-mentions-ratio"><?php echo esc_html( $mentions_count ); ?></span><span class="mention-total">/5</span>
+									<span class="mention-ratio" id="total-mentions-ratio"><?php echo esc_html( (string) $mentions_count ); ?></span><span class="mention-total">/5</span>
 								</div>
 								<p class="stat-meta"><?php esc_html_e( 'Active AI Engines referencing your brand.', 'drishti-geo' ); ?></p>
 							</div>
