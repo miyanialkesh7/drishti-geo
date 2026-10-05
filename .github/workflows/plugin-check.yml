@@ -19,6 +19,6 @@ jobs:
       - name: Run Plugin Check
         uses: WordPress/plugin-check-action@v1
         with:
-          plugin-repo: .
           build-dir: .
           exclude-directories: .git,.github,.wordpress-org,tests,vendor,node_modules
+          exclude-files: .distignore,.editorconfig,.gitattributes,.gitignore,CHANGELOG.md,CODE_OF_CONDUCT.md,CONTRIBUTING.md,SECURITY.md,composer.json,composer.lock,phpcs.xml.dist,phpstan-bootstrap.php,phpstan.neon,phpunit.xml.dist

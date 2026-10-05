@@ -1,3 +1,4 @@
+
 <?php
 /**
  * Constants normally defined at runtime in the plugin's main file,
@@ -5,6 +6,11 @@
  *
  * @package Drishti_GEO
  */
+
+// Restrict direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 namespace {
 	if ( ! defined( 'DRISHTI_GEO_VERSION' ) ) {
