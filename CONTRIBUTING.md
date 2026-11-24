@@ -26,6 +26,20 @@ This installs the dev-only tooling used for linting, static analysis, and tests.
 - Update `readme.txt` and `CHANGELOG.md` if your change is user-facing.
 - Keep pull requests focused on a single change; unrelated cleanups should be a separate PR.
 
+## Automated checks and review
+
+Every pull request to `main` is checked automatically:
+
+| Automation | What it does |
+|---|---|
+| GitHub Actions CI | PHPCS, PHPStan, PHPUnit (PHP 7.4–8.5), PHP compatibility, WordPress.org Plugin Check, Composer Audit |
+| CodeQL | Scans the plugin's JavaScript (CodeQL does not support PHP) |
+| Dependabot | Weekly update PRs for Composer and GitHub Actions dependencies |
+| Branch protection | `main` is protected by a repository ruleset: changes go through a pull request and the required checks must pass |
+| AI code review | GitHub Copilot is automatically requested as a reviewer on pull requests |
+
+Issue and pull request templates live in `.github/`.
+
 ## Coding standards
 
 - Follow the [WordPress PHP Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/).
